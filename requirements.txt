@@ -1,0 +1,3 @@
+requests
+python-dotenv
+pyvmomi==8.0.2
