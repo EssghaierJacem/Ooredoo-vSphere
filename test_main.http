@@ -1,0 +1,38 @@
+### vSphere Monitoring API Test Requests
+
+### Health Check
+GET http://localhost:8000/system/health
+
+### Test Connection
+GET http://localhost:8000/system/connection/test
+
+### System Overview
+GET http://localhost:8000/system/overview/dashboard
+
+### Clusters
+GET http://localhost:8000/clusters/
+GET http://localhost:8000/clusters/summary/overview
+
+### Hosts
+GET http://localhost:8000/hosts/
+GET http://localhost:8000/hosts/summary/overview
+
+### Datastores
+GET http://localhost:8000/datastores/
+GET http://localhost:8000/datastores/summary/overview
+
+### Virtual Machines
+GET http://localhost:8000/vms/
+GET http://localhost:8000/vms/running/all
+GET http://localhost:8000/vms/stopped/all
+GET http://localhost:8000/vms/templates/all
+GET http://localhost:8000/vms/summary/overview
+
+### Historical Data
+POST http://localhost:8000/history/store
+GET http://localhost:8000/history/data/cluster
+GET http://localhost:8000/history/data/host
+GET http://localhost:8000/history/data/datastore
+GET http://localhost:8000/history/data/vm
+GET http://localhost:8000/history/metrics
+GET http://localhost:8000/history/metrics/summary
