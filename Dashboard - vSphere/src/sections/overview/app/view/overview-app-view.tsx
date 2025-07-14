@@ -5,7 +5,8 @@ import { useTheme } from '@mui/material/styles';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 import { SeoIllustration } from 'src/assets/illustrations';
-import { _appAuthors, _appRelated, _appFeatured, _appInvoices, _appInstalled } from 'src/_mock';
+import { useEffect, useState } from 'react';
+import { fetchDashboardOverview } from 'src/lib/api';
 
 import { svgColorClasses } from 'src/components/svg-color';
 
@@ -26,8 +27,33 @@ import { AppTopInstalledCountries } from '../app-top-installed-countries';
 
 export function OverviewAppView() {
   const { user } = useMockedUser();
-
   const theme = useTheme();
+
+  // State for backend data
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchDashboardOverview()
+      .then((res) => {
+        setData(res);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message || 'Failed to load data');
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <DashboardContent maxWidth="xl">Loading...</DashboardContent>;
+  if (error) return <DashboardContent maxWidth="xl">Error: {error}</DashboardContent>;
+  if (!data) return null;
+
+  // Map backend data to props expected by components
+  // Example: replace _appFeatured, _appInvoices, etc. with data from backend
+  // For now, just pass summary/resource_usage/alerts as needed
 
   return (
     <DashboardContent maxWidth="xl">
@@ -44,28 +70,26 @@ export function OverviewAppView() {
             }
           />
         </Grid>
-
+        {/* Example: Replace with real data as you map it */}
         <Grid size={{ xs: 12, md: 4 }}>
-          <AppFeatured list={_appFeatured} />
+          <AppFeatured list={[]} />
         </Grid>
-
         <Grid size={{ xs: 12, md: 4 }}>
           <AppWidgetSummary
             title="Total active users"
             percent={2.6}
-            total={18765}
+            total={data.summary?.total_hosts || 0}
             chart={{
               categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
               series: [15, 18, 12, 51, 68, 11, 39, 37],
             }}
           />
         </Grid>
-
         <Grid size={{ xs: 12, md: 4 }}>
           <AppWidgetSummary
             title="Total installed"
             percent={0.2}
-            total={4876}
+            total={data.summary?.total_vms || 0}
             chart={{
               colors: [theme.palette.info.main],
               categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
@@ -73,12 +97,11 @@ export function OverviewAppView() {
             }}
           />
         </Grid>
-
         <Grid size={{ xs: 12, md: 4 }}>
           <AppWidgetSummary
             title="Total downloads"
             percent={-0.1}
-            total={678}
+            total={data.summary?.total_datastores || 0}
             chart={{
               colors: [theme.palette.error.main],
               categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
@@ -86,7 +109,7 @@ export function OverviewAppView() {
             }}
           />
         </Grid>
-
+        {/* The rest of the widgets/components can be mapped similarly using data from backend */}
         <Grid size={{ xs: 12, md: 6, lg: 4 }}>
           <AppCurrentDownload
             title="Current download"
@@ -154,7 +177,7 @@ export function OverviewAppView() {
         <Grid size={{ xs: 12, lg: 8 }}>
           <AppNewInvoice
             title="New invoice"
-            tableData={_appInvoices}
+            tableData={[]}
             headCells={[
               { id: 'id', label: 'Invoice ID' },
               { id: 'category', label: 'Category' },
@@ -166,15 +189,15 @@ export function OverviewAppView() {
         </Grid>
 
         <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          <AppTopRelated title="Related applications" list={_appRelated} />
+          <AppTopRelated title="Related applications" list={[]} />
         </Grid>
 
         <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          <AppTopInstalledCountries title="Top installed countries" list={_appInstalled} />
+          <AppTopInstalledCountries title="Top installed countries" list={[]} />
         </Grid>
 
         <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          <AppTopAuthors title="Top authors" list={_appAuthors} />
+          <AppTopAuthors title="Top authors" list={[]} />
         </Grid>
 
         <Grid size={{ xs: 12, md: 6, lg: 4 }}>
