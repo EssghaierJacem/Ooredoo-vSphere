@@ -6,7 +6,13 @@ import { useTheme } from '@mui/material/styles';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { SeoIllustration } from 'src/assets/illustrations';
 import { useEffect, useState } from 'react';
-import { fetchDashboardOverview } from 'src/lib/api';
+import {
+  fetchDashboardOverview,
+  fetchClusters,
+  fetchHosts,
+  fetchDatastores,
+  fetchVMs,
+} from 'src/lib/api';
 
 import { svgColorClasses } from 'src/components/svg-color';
 
@@ -30,15 +36,29 @@ export function OverviewAppView() {
   const theme = useTheme();
 
   // State for backend data
-  const [data, setData] = useState<any>(null);
+  const [overview, setOverview] = useState<any>(null);
+  const [clusters, setClusters] = useState<any[]>([]);
+  const [hosts, setHosts] = useState<any[]>([]);
+  const [datastores, setDatastores] = useState<any[]>([]);
+  const [vms, setVMs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
-    fetchDashboardOverview()
-      .then((res) => {
-        setData(res);
+    Promise.all([
+      fetchDashboardOverview(),
+      fetchClusters(),
+      fetchHosts(),
+      fetchDatastores(),
+      fetchVMs(),
+    ])
+      .then(([overviewData, clustersData, hostsData, datastoresData, vmsData]) => {
+        setOverview(overviewData);
+        setClusters(clustersData);
+        setHosts(hostsData);
+        setDatastores(datastoresData);
+        setVMs(vmsData);
         setLoading(false);
       })
       .catch((err) => {
@@ -49,125 +69,164 @@ export function OverviewAppView() {
 
   if (loading) return <DashboardContent maxWidth="xl">Loading...</DashboardContent>;
   if (error) return <DashboardContent maxWidth="xl">Error: {error}</DashboardContent>;
-  if (!data) return null;
+  if (!overview) return null;
 
-  // Map backend data to props expected by components
-  // Example: replace _appFeatured, _appInvoices, etc. with data from backend
-  // For now, just pass summary/resource_usage/alerts as needed
+  // --- Data Mapping for Widgets ---
+  // Defensive: always provide arrays for chart props, even if backend fails
+  const safeClusters =
+    Array.isArray(clusters) && clusters.length > 0
+      ? clusters
+      : [{ name: 'N/A', num_hosts: 0, total_storage_gb: 0 }];
+  const safeHosts =
+    Array.isArray(hosts) && hosts.length > 0
+      ? hosts
+      : [{ name: 'N/A', cpu_used_mhz: 0, memory_used_gb: 0, memory_total_gb: 0 }];
+  const safeDatastores =
+    Array.isArray(datastores) && datastores.length > 0
+      ? datastores
+      : [{ name: 'N/A', used_space_gb: 0, accessible: false, type: 'N/A' }];
+  const safeVMs =
+    Array.isArray(vms) && vms.length > 0
+      ? vms
+      : [{ name: 'N/A', cpu_usage_mhz: 0, memory_gb: 0, uuid: 'N/A' }];
+
+  // If overview or any critical data is missing, show a user-friendly error
+  if (!overview || !overview.summary || !overview.resource_usage) {
+    return (
+      <DashboardContent maxWidth="xl">
+        Backend data unavailable. Please check your vCenter/hosts and try again.
+      </DashboardContent>
+    );
+  }
+
+  const featuredList = safeClusters.slice(0, 3).map((c) => ({
+    id: c.name,
+    title: c.name,
+    coverUrl: '/assets/images/about/about_1.webp',
+    description: `Hosts: ${c.num_hosts}, VMs: ${c.num_vms}, Status: ${c.overall_status}`,
+  }));
+
+  const topRelatedList = safeVMs
+    .sort((a, b) => (b.cpu_usage_mhz || 0) - (a.cpu_usage_mhz || 0))
+    .slice(0, 5)
+    .map((vm) => ({
+      id: vm.uuid || vm.name,
+      name: vm.name,
+      size: vm.memory_gb || 0,
+      price: 0,
+      shortcut: '/assets/icons/platforms/ic_vmware.svg',
+      downloaded: vm.cpu_usage_mhz || 0,
+      ratingNumber: 1,
+      totalReviews: 1,
+    }));
+
+  const topCountriesList = safeHosts.slice(0, 5).map((h, i) => ({
+    id: h.name,
+    apple: Math.round(h.memory_used_gb || 0),
+    android: Math.round(h.cpu_used_mhz || 0),
+    windows: Math.round(h.memory_total_gb || 0),
+    countryCode: ['US', 'FR', 'DE', 'IN', 'CN'][i % 5],
+    countryName: ['USA', 'France', 'Germany', 'India', 'China'][i % 5],
+  }));
+
+  const topAuthorsList = safeClusters
+    .sort((a, b) => (b.num_vms || 0) - (a.num_vms || 0))
+    .slice(0, 5)
+    .map((c) => ({
+      id: c.name,
+      name: c.name,
+      avatarUrl: '/assets/icons/platforms/ic_vmware.svg',
+      totalFavorites: c.num_vms || 0,
+    }));
+
+  const invoiceList = safeDatastores.slice(0, 5).map((ds) => ({
+    id: ds.name,
+    price: Math.round(ds.used_space_gb || 0),
+    status: ds.accessible ? 'active' : 'inactive',
+    category: ds.type || 'N/A',
+    invoiceNumber: ds.name,
+  }));
+
+  // For AppAreaInstalled, ApexCharts expects: [{ name, data: number[] }]
+  const areaInstalledSeries = safeClusters.slice(0, 3).map((c) => ({
+    name: c.name,
+    data: Array(12).fill(Math.round(c.total_storage_gb || 0) / 12),
+  }));
 
   return (
     <DashboardContent maxWidth="xl">
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 8 }}>
           <AppWelcome
-            title={`Welcome back 👋 \n ${user?.displayName}`}
-            description="If you are going to use a passage of Lorem Ipsum, you need to be sure there isn't anything."
+            title={`vSphere Dashboard Overview`}
+            description={`Welcome, ${user?.displayName || 'User'}! Here is your real-time vSphere infrastructure status.`}
             img={<SeoIllustration hideBackground />}
             action={
               <Button variant="contained" color="primary">
-                Go now
+                Refresh
               </Button>
             }
           />
         </Grid>
-        {/* Example: Replace with real data as you map it */}
         <Grid size={{ xs: 12, md: 4 }}>
-          <AppFeatured list={[]} />
+          <AppFeatured list={featuredList} />
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <AppWidgetSummary
-            title="Total active users"
-            percent={2.6}
-            total={data.summary?.total_hosts || 0}
+            title="Total Clusters"
+            percent={0}
+            total={overview.summary?.total_clusters || 0}
             chart={{
-              categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
-              series: [15, 18, 12, 51, 68, 11, 39, 37],
+              categories: safeClusters.slice(0, 8).map((c) => c.name || ''),
+              series: safeClusters.slice(0, 8).map((c) => c.num_hosts || 0),
             }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <AppWidgetSummary
-            title="Total installed"
-            percent={0.2}
-            total={data.summary?.total_vms || 0}
+            title="Total Hosts"
+            percent={0}
+            total={overview.summary?.total_hosts || 0}
             chart={{
               colors: [theme.palette.info.main],
-              categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
-              series: [20, 41, 63, 33, 28, 35, 50, 46],
+              categories: safeHosts.slice(0, 8).map((h) => h.name || ''),
+              series: safeHosts.slice(0, 8).map((h) => h.cpu_used_mhz || 0),
             }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <AppWidgetSummary
-            title="Total downloads"
-            percent={-0.1}
-            total={data.summary?.total_datastores || 0}
+            title="Total Datastores"
+            percent={0}
+            total={overview.summary?.total_datastores || 0}
             chart={{
               colors: [theme.palette.error.main],
-              categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
-              series: [18, 19, 31, 8, 16, 37, 12, 33],
+              categories: safeDatastores.slice(0, 8).map((ds) => ds.name || ''),
+              series: safeDatastores.slice(0, 8).map((ds) => ds.used_space_gb || 0),
             }}
           />
         </Grid>
-        {/* The rest of the widgets/components can be mapped similarly using data from backend */}
         <Grid size={{ xs: 12, md: 6, lg: 4 }}>
           <AppCurrentDownload
-            title="Current download"
-            subheader="Downloaded by operating system"
+            title="Resource Usage Breakdown"
+            subheader="CPU, Memory, Storage"
             chart={{
               series: [
-                { label: 'Mac', value: 12244 },
-                { label: 'Window', value: 53345 },
-                { label: 'iOS', value: 44313 },
-                { label: 'Android', value: 78343 },
-              ],
-            }}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 6, lg: 8 }}>
-          <AppAreaInstalled
-            title="Area installed"
-            subheader="(+43%) than last year"
-            chart={{
-              categories: [
-                'Jan',
-                'Feb',
-                'Mar',
-                'Apr',
-                'May',
-                'Jun',
-                'Jul',
-                'Aug',
-                'Sep',
-                'Oct',
-                'Nov',
-                'Dec',
-              ],
-              series: [
                 {
-                  name: '2022',
-                  data: [
-                    { name: 'Asia', data: [12, 10, 18, 22, 20, 12, 8, 21, 20, 14, 15, 16] },
-                    { name: 'Europe', data: [12, 10, 18, 22, 20, 12, 8, 21, 20, 14, 15, 16] },
-                    { name: 'Americas', data: [12, 10, 18, 22, 20, 12, 8, 21, 20, 14, 15, 16] },
-                  ],
+                  label: 'CPU Used (MHz)',
+                  value: Math.round(overview.resource_usage?.used_cpu_mhz || 0),
                 },
                 {
-                  name: '2023',
-                  data: [
-                    { name: 'Asia', data: [6, 18, 14, 9, 20, 6, 22, 19, 8, 22, 8, 17] },
-                    { name: 'Europe', data: [6, 18, 14, 9, 20, 6, 22, 19, 8, 22, 8, 17] },
-                    { name: 'Americas', data: [6, 18, 14, 9, 20, 6, 22, 19, 8, 22, 8, 17] },
-                  ],
+                  label: 'Memory Used (GB)',
+                  value: Math.round(overview.resource_usage?.used_memory_gb || 0),
                 },
                 {
-                  name: '2024',
-                  data: [
-                    { name: 'Asia', data: [6, 20, 15, 18, 7, 24, 6, 10, 12, 17, 18, 10] },
-                    { name: 'Europe', data: [6, 20, 15, 18, 7, 24, 6, 10, 12, 17, 18, 10] },
-                    { name: 'Americas', data: [6, 20, 15, 18, 7, 24, 6, 10, 12, 17, 18, 10] },
-                  ],
+                  label: 'Storage Used (GB)',
+                  value: Math.round(overview.resource_usage?.used_storage_gb || 0),
+                },
+                {
+                  label: 'Storage Free (GB)',
+                  value: Math.round(overview.resource_usage?.free_storage_gb || 0),
                 },
               ],
             }}
@@ -176,45 +235,37 @@ export function OverviewAppView() {
 
         <Grid size={{ xs: 12, lg: 8 }}>
           <AppNewInvoice
-            title="New invoice"
-            tableData={[]}
+            title="Top Datastores"
+            tableData={invoiceList}
             headCells={[
-              { id: 'id', label: 'Invoice ID' },
-              { id: 'category', label: 'Category' },
-              { id: 'price', label: 'Price' },
+              { id: 'invoiceNumber', label: 'Datastore Name' },
+              { id: 'category', label: 'Type' },
+              { id: 'price', label: 'Used (GB)' },
               { id: 'status', label: 'Status' },
               { id: '' },
             ]}
           />
         </Grid>
-
         <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          <AppTopRelated title="Related applications" list={[]} />
+          <AppTopRelated title="Top VMs by CPU Usage" list={topRelatedList} />
         </Grid>
-
         <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          <AppTopInstalledCountries title="Top installed countries" list={[]} />
+          <AppTopAuthors title="Top Clusters by VM Count" list={topAuthorsList} />
         </Grid>
-
-        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          <AppTopAuthors title="Top authors" list={[]} />
-        </Grid>
-
         <Grid size={{ xs: 12, md: 6, lg: 4 }}>
           <Box sx={{ gap: 3, display: 'flex', flexDirection: 'column' }}>
             <AppWidget
-              title="Conversion"
-              total={38566}
+              title="Running VMs"
+              total={overview.summary?.running_vms || 0}
               icon="solar:user-rounded-bold"
-              chart={{ series: 48 }}
+              chart={{ series: overview.summary?.running_vms || 0 }}
             />
-
             <AppWidget
-              title="Applications"
-              total={55566}
+              title="Stopped VMs"
+              total={overview.summary?.stopped_vms || 0}
               icon="solar:letter-bold"
               chart={{
-                series: 75,
+                series: overview.summary?.stopped_vms || 0,
                 colors: [theme.vars.palette.info.light, theme.vars.palette.info.main],
               }}
               sx={{ bgcolor: 'info.dark', [`& .${svgColorClasses.root}`]: { color: 'info.light' } }}

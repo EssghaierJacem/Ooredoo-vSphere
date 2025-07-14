@@ -9,8 +9,17 @@ export const api = axios.create({
   },
 });
 
-// Example: get dashboard overview
 export const fetchDashboardOverview = (): Promise<any> =>
   api.get('/system/overview/dashboard').then((res: { data: any }) => res.data);
 
-// Add more API functions as needed for clusters, hosts, datastores, vms, etc. 
+export const fetchClusters = (): Promise<any[]> =>
+  api.get('/clusters/').then((res: { data: any[] }) => res.data);
+
+export const fetchHosts = (): Promise<any[]> =>
+  api.get('/hosts/').then((res: { data: any[] }) => res.data);
+
+export const fetchDatastores = (): Promise<any[]> =>
+  api.get('/datastores/').then((res: { data: any[] }) => res.data);
+
+export const fetchVMs = (): Promise<any[]> =>
+  api.get('/vms/').then((res: { data: any[] }) => res.data); 
