@@ -32,10 +32,12 @@ type Props = CardProps & {
   headCells: TableHeadCellProps[];
   tableData: {
     id: string;
-    price: number;
+    used: number;
+    total: number;
     status: string;
     category: string;
     invoiceNumber: string;
+    price?: number; // for backward compatibility
   }[];
 };
 
@@ -137,11 +139,9 @@ function RowItem({ row }: RowItemProps) {
     <>
       <TableRow>
         <TableCell>{row.invoiceNumber}</TableCell>
-
         <TableCell>{row.category}</TableCell>
-
-        <TableCell>{fCurrency(row.price)}</TableCell>
-
+        <TableCell>{row.used}</TableCell>
+        <TableCell>{row.total}</TableCell>
         <TableCell>
           <Label
             variant="soft"
@@ -154,14 +154,12 @@ function RowItem({ row }: RowItemProps) {
             {row.status}
           </Label>
         </TableCell>
-
         <TableCell align="right" sx={{ pr: 1 }}>
           <IconButton color={menuActions.open ? 'inherit' : 'default'} onClick={menuActions.onOpen}>
             <Iconify icon="eva:more-vertical-fill" />
           </IconButton>
         </TableCell>
       </TableRow>
-
       {renderMenuActions()}
     </>
   );
