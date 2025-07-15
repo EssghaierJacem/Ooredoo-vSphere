@@ -29,6 +29,7 @@ import { AppWidgetSummary } from '../app-widget-summary';
 import { AppCurrentDownload } from '../app-current-download';
 import { AppTopInstalledCountries } from '../app-top-installed-countries';
 import { fNumber, fData } from 'src/utils/format-number';
+import { FileStorageOverview } from 'src/sections/file/file-storage-overview';
 
 // ----------------------------------------------------------------------
 
@@ -277,26 +278,50 @@ export function OverviewAppView() {
         <Grid size={{ xs: 12, md: 12, lg: 8 }}>
           <AppTopRelated title="Top VMs by CPU Usage" list={topRelatedList} />
         </Grid>
-        {/* Removed Top Clusters by VM Count (AppTopAuthors) */}
-        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          <Box sx={{ gap: 3, display: 'flex', flexDirection: 'column' }}>
-            <AppWidget
-              title="Running VMs"
-              total={overview.summary?.running_vms || 0}
-              icon="solar:user-rounded-bold"
-              chart={{ series: overview.summary?.running_vms || 0 }}
-            />
-            <AppWidget
-              title="Stopped VMs"
-              total={overview.summary?.stopped_vms || 0}
-              icon="solar:letter-bold"
-              chart={{
-                series: overview.summary?.stopped_vms || 0,
-                colors: [theme.vars.palette.info.light, theme.vars.palette.info.main],
-              }}
-              sx={{ bgcolor: 'info.dark', [`& .${svgColorClasses.root}`]: { color: 'info.light' } }}
-            />
-          </Box>
+        <Grid size={{ xs: 12, md: 6, lg: 4 }} sx={{ height: 420, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          {(() => {
+            // Use resource_usage for RAM values
+            const ru = overview.resource_usage || {};
+            const totalRamAvailable = typeof ru.total_memory_gb === 'number' && ru.total_memory_gb > 0
+              ? ru.total_memory_gb
+              : 0;
+            const totalRamUsed = typeof ru.used_memory_gb === 'number' && ru.used_memory_gb > 0
+              ? ru.used_memory_gb
+              : 0;
+            let percentUsed = totalRamAvailable > 0 ? (totalRamUsed / totalRamAvailable) * 100 : 0;
+            if (!isFinite(percentUsed) || percentUsed < 0) percentUsed = 0;
+            if (percentUsed > 100) percentUsed = 100;
+            percentUsed = Math.round(percentUsed);
+            // Sort VMs by RAM usage, descending, and take top 4 (no padding)
+            const topVMs = safeVMs
+              .slice()
+              .sort((a, b) => (b.memory_gb || 0) - (a.memory_gb || 0))
+              .slice(0, 4);
+            return (
+              <FileStorageOverview
+                total={Number(totalRamAvailable.toFixed(2))}
+                used={Number(totalRamUsed.toFixed(2))}
+                chart={{ series: percentUsed }}
+                data={topVMs.map((vm) => {
+                  const ramGB = typeof vm.memory_gb === 'number' && vm.memory_gb > 0 ? Number(vm.memory_gb.toFixed(2)) : 0;
+                  let ip = '-';
+                  if (typeof vm.ip_addresses === 'string') ip = vm.ip_addresses;
+                  else if (Array.isArray(vm.ip_addresses) && vm.ip_addresses.length > 0) ip = vm.ip_addresses[0];
+                  return {
+                    name: vm.name || '-',
+                    usedStorage: ramGB,
+                    filesCount: '', // not used
+                    icon: (
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <Box component="img" src="/assets/icons/platforms/datacenter.png" sx={{ width: 32, height: 32, mb: 0.5 }} />
+                      </Box>
+                    ),
+                    ip,
+                  };
+                })}
+              />
+            );
+          })()}
         </Grid>
       </Grid>
     </DashboardContent>
