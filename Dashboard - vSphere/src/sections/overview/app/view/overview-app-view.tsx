@@ -91,8 +91,8 @@ export function OverviewAppView() {
       ? vms
       : [{ name: 'N/A', cpu_usage_mhz: 0, memory_gb: 0, storage_gb: 0, uuid: 'N/A' }];
 
-  // vCenter info for carousel
-  const vcenterInfo = overview.vcenter_info || overview.info || {};
+  // vCenter info for carousel (prefer connection_status if present)
+  const vcenterInfo = overview.connection_status || overview.vcenter_info || overview.info || {};
   const vcenterSlide = {
     id: 'vcenter-info',
     title: vcenterInfo.product_name || 'vCenter Server',
@@ -100,10 +100,10 @@ export function OverviewAppView() {
     description: `Version: ${vcenterInfo.product_version || '-'} | API: ${vcenterInfo.api_version || '-'} | URL: ${vcenterInfo.vcenter_url || '-'}`,
   };
 
-  // Cluster slides (keep as before)
+  // Cluster slides (show all clusters, not just first two)
   const featuredList = [
     vcenterSlide,
-    ...safeClusters.slice(0, 2).map((c) => ({
+    ...safeClusters.map((c) => ({
       id: c.name,
       title: c.name,
       coverUrl: '/assets/images/about/about_1.webp',
@@ -111,46 +111,48 @@ export function OverviewAppView() {
     })),
   ];
 
-  // Top VMs by CPU, now with RAM, CPU, Storage
+  // Top VMs by CPU, now with RAM, CPU, Storage, and a VM image
   const topRelatedList = safeVMs
     .sort((a, b) => (b.cpu_usage_mhz || 0) - (a.cpu_usage_mhz || 0))
     .slice(0, 5)
-    .map((vm) => ({
-      id: vm.uuid || vm.name,
-      name: vm.name,
-      ram: vm.memory_gb || 0,
-      cpu: vm.cpu_usage_mhz || 0,
-      storage: vm.storage_gb || 0,
-      shortcut: '/assets/icons/platforms/ic_vmware.svg',
-      // for type compatibility
-      size: 0,
-      price: 0,
-      downloaded: 0,
-      ratingNumber: 0,
-      totalReviews: 0,
-    }));
+    .map((vm) => {
+      const storageRaw = vm.storage_committed_gb || vm.storage_gb || vm.disk_gb || vm.allocated_storage_gb || vm.storage || 0;
+      return {
+        id: vm.uuid || vm.name,
+        name: vm.name,
+        ram: vm.memory_gb || 0,
+        cpu: vm.cpu_usage_mhz || 0,
+        storage: typeof storageRaw === 'number' ? Number(storageRaw.toFixed(2)) : storageRaw,
+        picture: '/assets/icons/platforms/ic_vmware.png',
+        shortcut: '/assets/icons/platforms/ic_vmware.png',
+        // for type compatibility
+        size: 0,
+        price: 0,
+        downloaded: 0,
+        ratingNumber: 0,
+        totalReviews: 0,
+      };
+    });
 
   // Top Datastores table, now with Total Space and no dollar sign
   const invoiceList = safeDatastores.slice(0, 5).map((ds) => ({
     id: ds.name,
     used: Math.round(ds.used_space_gb || 0),
-    total: Math.round(ds.total_space_gb || 0),
+    total: Math.round(ds.capacity_gb || (ds.used_space_gb || 0) + (ds.free_space_gb || 0)),
     status: ds.accessible ? 'active' : 'inactive',
     category: ds.type || 'N/A',
     invoiceNumber: ds.name,
     price: Math.round(ds.used_space_gb || 0), // for backward compatibility
   }));
 
-  // Resource usage: show used/free for storage, cpu, ram
+  // Resource usage: show Free Storage and Used Storage, and display total below chart
   const ru = overview.resource_usage || {};
   const resourceSeries = [
-    { label: 'CPU Used (MHz)', value: Math.round(ru.used_cpu_mhz || 0) },
-    { label: 'CPU Free (MHz)', value: Math.round(ru.free_cpu_mhz || 0) },
-    { label: 'Memory Used (GB)', value: Math.round(ru.used_memory_gb || 0) },
-    { label: 'Memory Free (GB)', value: Math.round(ru.free_memory_gb || 0) },
-    { label: 'Storage Used (GB)', value: Math.round(ru.used_storage_gb || 0) },
-    { label: 'Storage Free (GB)', value: Math.round(ru.free_storage_gb || 0) },
+    { label: 'Free Storage (GB)', value: Math.round(ru.free_storage_gb || 0) },
+    { label: 'Used Storage (GB)', value: Math.round(ru.used_storage_gb || 0) },
   ];
+  const totalStorage = Math.round((ru.free_storage_gb || 0) + (ru.used_storage_gb || 0));
+  const resourceChartColors = [theme.palette.success.main, theme.palette.info.main];
 
   // If overview or any critical data is missing, show a user-friendly error
   if (!overview || !overview.summary || !overview.resource_usage) {
@@ -247,10 +249,16 @@ export function OverviewAppView() {
         </Grid>
         <Grid size={{ xs: 12, md: 6, lg: 4 }}>
           <AppCurrentDownload
-            title="Resource Usage Breakdown"
-            subheader="CPU, Memory, Storage"
-            chart={{ series: resourceSeries }}
+            title="Storage Breakdown"
+            subheader="Free vs Used Storage"
+            chart={{
+              series: resourceSeries.map((item) => ({ label: item.label, value: item.value })),
+              // colors: resourceChartColors, // REMOVE this line to use theme defaults
+            }}
           />
+          <Box sx={{ textAlign: 'center', mt: 1, color: 'text.secondary', fontWeight: 500 }}>
+            Total Storage: {totalStorage} GB
+          </Box>
         </Grid>
         <Grid size={{ xs: 12, lg: 8 }}>
           <AppNewInvoice
@@ -266,12 +274,10 @@ export function OverviewAppView() {
             ]}
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+        <Grid size={{ xs: 12, md: 12, lg: 8 }}>
           <AppTopRelated title="Top VMs by CPU Usage" list={topRelatedList} />
         </Grid>
-        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          <AppTopAuthors title="Top Clusters by VM Count" list={topAuthorsList} />
-        </Grid>
+        {/* Removed Top Clusters by VM Count (AppTopAuthors) */}
         <Grid size={{ xs: 12, md: 6, lg: 4 }}>
           <Box sx={{ gap: 3, display: 'flex', flexDirection: 'column' }}>
             <AppWidget

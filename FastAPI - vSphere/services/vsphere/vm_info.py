@@ -49,6 +49,15 @@ def get_vms_info():
                 memory_mb = config.hardware.memoryMB if hasattr(config.hardware, 'memoryMB') else 0
                 memory_gb = memory_mb / 1024
             
+            # Get storage info (allocated/used)
+            storage_committed_gb = 0
+            storage_uncommitted_gb = 0
+            storage_unshared_gb = 0
+            if hasattr(summary, 'storage') and summary.storage:
+                storage_committed_gb = (summary.storage.committed or 0) / (1024 ** 3)
+                storage_uncommitted_gb = (summary.storage.uncommitted or 0) / (1024 ** 3)
+                storage_unshared_gb = (summary.storage.unshared or 0) / (1024 ** 3)
+
             # Get datastore info
             datastores = []
             if hasattr(vm, 'datastore') and vm.datastore:
@@ -107,6 +116,10 @@ def get_vms_info():
                 'template': config.template if config and hasattr(config, 'template') else False,
                 'version': config.version if config and hasattr(config, 'version') else None,
                 'annotation': config.annotation if config and hasattr(config, 'annotation') else None,
+                # Add storage info
+                'storage_committed_gb': storage_committed_gb,
+                'storage_uncommitted_gb': storage_uncommitted_gb,
+                'storage_unshared_gb': storage_unshared_gb,
             }
             
             vms.append(vm_info)

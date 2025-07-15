@@ -40,6 +40,7 @@ type Props = CardProps & {
     cpu: number;
     storage: number;
     shortcut: string;
+    picture?: string; // Add this line to fix TS2339
   }[];
 };
 
@@ -98,7 +99,7 @@ function Item({ item, sx, ...other }: ItemProps) {
     >
       <Avatar
         variant="rounded"
-        src={item.shortcut}
+        src={item.picture || item.shortcut}
         sx={{
           p: 1,
           width: 48,
