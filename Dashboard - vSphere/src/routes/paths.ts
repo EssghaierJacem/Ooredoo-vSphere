@@ -50,5 +50,6 @@ export const paths = {
       five: `${ROOTS.DASHBOARD}/group/five`,
       six: `${ROOTS.DASHBOARD}/group/six`,
     },
+    workorderRequest: `${ROOTS.DASHBOARD}/workorder/request`,
   },
 };

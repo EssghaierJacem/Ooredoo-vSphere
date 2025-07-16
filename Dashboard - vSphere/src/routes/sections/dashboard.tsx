@@ -20,7 +20,7 @@ const PageThree = lazy(() => import('src/pages/dashboard/three'));
 const PageFour = lazy(() => import('src/pages/dashboard/four'));
 const PageFive = lazy(() => import('src/pages/dashboard/five'));
 const PageSix = lazy(() => import('src/pages/dashboard/six'));
-
+const WorkorderRequestFormPage = lazy(() => import('src/pages/workorder/request-form'));
 // ----------------------------------------------------------------------
 
 function SuspenseOutlet() {
@@ -54,6 +54,7 @@ export const dashboardRoutes: RouteObject[] = [
           { path: 'six', element: <PageSix /> },
         ],
       },
+      { path: 'workorder/request', element: <WorkorderRequestFormPage /> },
     ],
   },
 ];
