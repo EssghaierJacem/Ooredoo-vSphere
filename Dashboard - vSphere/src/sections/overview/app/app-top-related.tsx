@@ -36,12 +36,11 @@ type Props = CardProps & {
   list: {
     id: string;
     name: string;
-    size: number;
-    price: number;
+    ram: number;
+    cpu: number;
+    storage: number;
     shortcut: string;
-    downloaded: number;
-    ratingNumber: number;
-    totalReviews: number;
+    picture?: string; // Add this line to fix TS2339
   }[];
 };
 
@@ -100,7 +99,7 @@ function Item({ item, sx, ...other }: ItemProps) {
     >
       <Avatar
         variant="rounded"
-        src={item.shortcut}
+        src={item.picture || item.shortcut}
         sx={{
           p: 1,
           width: 48,
@@ -108,7 +107,6 @@ function Item({ item, sx, ...other }: ItemProps) {
           bgcolor: 'background.neutral',
         }}
       />
-
       <div>
         <Box
           sx={{
@@ -121,12 +119,7 @@ function Item({ item, sx, ...other }: ItemProps) {
           <Typography variant="subtitle2" noWrap>
             {item.name}
           </Typography>
-
-          <Label color={item.price === 0 ? 'default' : 'success'} sx={{ height: 20 }}>
-            {item.price === 0 ? 'Free' : fCurrency(item.price)}
-          </Label>
         </Box>
-
         <Stack
           divider={
             <Box
@@ -146,26 +139,16 @@ function Item({ item, sx, ...other }: ItemProps) {
           }}
         >
           <Box sx={{ gap: 0.5, display: 'flex', alignItems: 'center' }}>
-            <Iconify width={16} icon="solar:download-bold" sx={{ color: 'text.disabled' }} />
-            {fShortenNumber(item.downloaded)}
+            <Iconify width={16} icon="solar:copy-bold" sx={{ color: 'text.disabled' }} />
+            CPU: {item.cpu} MHz
           </Box>
-
+          <Box sx={{ gap: 0.5, display: 'flex', alignItems: 'center' }}>
+            <Iconify width={16} icon="solar:flag-bold" sx={{ color: 'text.disabled' }} />
+            RAM: {item.ram} GB
+          </Box>
           <Box sx={{ gap: 0.5, display: 'flex', alignItems: 'center' }}>
             <Iconify width={16} icon="solar:ssd-round-bold" sx={{ color: 'text.disabled' }} />
-            {fData(item.size)}
-          </Box>
-
-          <Box sx={{ gap: 0.5, display: 'flex', alignItems: 'center' }}>
-            <Rating
-              max={1}
-              readOnly
-              size="small"
-              name="reviews"
-              precision={0.5}
-              value={item.ratingNumber}
-              sx={{ [`& .${svgIconClasses.root}`]: { width: 16, height: 16 } }}
-            />
-            {fShortenNumber(item.totalReviews)}
+            Storage: {item.storage} GB
           </Box>
         </Stack>
       </div>

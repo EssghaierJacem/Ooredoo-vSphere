@@ -44,7 +44,7 @@ export function NavUpgrade({ sx, ...other }: BoxProps) {
               borderBottomLeftRadius: 2,
             }}
           >
-            Free
+            Admin
           </Label>
         </Box>
 
@@ -67,7 +67,7 @@ export function NavUpgrade({ sx, ...other }: BoxProps) {
         </Box>
 
         <Button variant="contained" href={paths.minimalStore} target="_blank" rel="noopener">
-          Upgrade to Pro
+          Go to vSphere
         </Button>
       </Box>
     </Box>
@@ -152,7 +152,7 @@ export function UpgradeBlock({ sx, ...other }: BoxProps) {
         </Box>
 
         <Button variant="contained" size="small" color="warning">
-          Upgrade to Pro
+          vSphere
         </Button>
       </Box>
     </Box>

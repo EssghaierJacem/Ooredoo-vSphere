@@ -32,7 +32,7 @@ export type ConfigValue = {
 // ----------------------------------------------------------------------
 
 export const CONFIG: ConfigValue = {
-  appName: 'Minimal UI',
+  appName: 'vSphere',
   appVersion: packageJson.version,
   serverUrl: process.env.REACT_APP_SERVER_URL ?? '',
   assetsDir: process.env.REACT_APP_ASSETS_DIR ?? '',

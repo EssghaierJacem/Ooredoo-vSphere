@@ -28,6 +28,8 @@ import { AppAreaInstalled } from '../app-area-installed';
 import { AppWidgetSummary } from '../app-widget-summary';
 import { AppCurrentDownload } from '../app-current-download';
 import { AppTopInstalledCountries } from '../app-top-installed-countries';
+import { fNumber, fData } from 'src/utils/format-number';
+import { FileStorageOverview } from 'src/sections/file/file-storage-overview';
 
 // ----------------------------------------------------------------------
 
@@ -84,11 +86,74 @@ export function OverviewAppView() {
   const safeDatastores =
     Array.isArray(datastores) && datastores.length > 0
       ? datastores
-      : [{ name: 'N/A', used_space_gb: 0, accessible: false, type: 'N/A' }];
+      : [{ name: 'N/A', used_space_gb: 0, total_space_gb: 0, accessible: false, type: 'N/A' }];
   const safeVMs =
     Array.isArray(vms) && vms.length > 0
       ? vms
-      : [{ name: 'N/A', cpu_usage_mhz: 0, memory_gb: 0, uuid: 'N/A' }];
+      : [{ name: 'N/A', cpu_usage_mhz: 0, memory_gb: 0, storage_gb: 0, uuid: 'N/A' }];
+
+  // vCenter info for carousel (prefer connection_status if present)
+  const vcenterInfo = overview.connection_status || overview.vcenter_info || overview.info || {};
+  const vcenterSlide = {
+    id: 'vcenter-info',
+    title: vcenterInfo.product_name || 'vCenter Server',
+    coverUrl: '/assets/images/about/about_2.webp',
+    description: `Version: ${vcenterInfo.product_version || '-'} | API: ${vcenterInfo.api_version || '-'} | URL: ${vcenterInfo.vcenter_url || '-'}`,
+  };
+
+  // Cluster slides (show all clusters, not just first two)
+  const featuredList = [
+    vcenterSlide,
+    ...safeClusters.map((c) => ({
+      id: c.name,
+      title: c.name,
+      coverUrl: '/assets/images/about/about_1.webp',
+      description: `Hosts: ${c.num_hosts}, VMs: ${c.num_vms}, Status: ${c.overall_status}`,
+    })),
+  ];
+
+  // Top VMs by CPU, now with RAM, CPU, Storage, and a VM image
+  const topRelatedList = safeVMs
+    .sort((a, b) => (b.cpu_usage_mhz || 0) - (a.cpu_usage_mhz || 0))
+    .slice(0, 5)
+    .map((vm) => {
+      const storageRaw = vm.storage_committed_gb || vm.storage_gb || vm.disk_gb || vm.allocated_storage_gb || vm.storage || 0;
+      return {
+        id: vm.uuid || vm.name,
+        name: vm.name,
+        ram: vm.memory_gb || 0,
+        cpu: vm.cpu_usage_mhz || 0,
+        storage: typeof storageRaw === 'number' ? Number(storageRaw.toFixed(2)) : storageRaw,
+        picture: '/assets/icons/platforms/ic_vmware.png',
+        shortcut: '/assets/icons/platforms/ic_vmware.png',
+        // for type compatibility
+        size: 0,
+        price: 0,
+        downloaded: 0,
+        ratingNumber: 0,
+        totalReviews: 0,
+      };
+    });
+
+  // Top Datastores table, now with Total Space and no dollar sign
+  const invoiceList = safeDatastores.slice(0, 5).map((ds) => ({
+    id: ds.name,
+    used: Math.round(ds.used_space_gb || 0),
+    total: Math.round(ds.capacity_gb || (ds.used_space_gb || 0) + (ds.free_space_gb || 0)),
+    status: ds.accessible ? 'active' : 'inactive',
+    category: ds.type || 'N/A',
+    invoiceNumber: ds.name,
+    price: Math.round(ds.used_space_gb || 0), // for backward compatibility
+  }));
+
+  // Resource usage: show Free Storage and Used Storage, and display total below chart
+  const ru = overview.resource_usage || {};
+  const resourceSeries = [
+    { label: 'Free Storage (GB)', value: Math.round(ru.free_storage_gb || 0) },
+    { label: 'Used Storage (GB)', value: Math.round(ru.used_storage_gb || 0) },
+  ];
+  const totalStorage = Math.round((ru.free_storage_gb || 0) + (ru.used_storage_gb || 0));
+  const resourceChartColors = [theme.palette.success.main, theme.palette.info.main];
 
   // If overview or any critical data is missing, show a user-friendly error
   if (!overview || !overview.summary || !overview.resource_usage) {
@@ -98,27 +163,6 @@ export function OverviewAppView() {
       </DashboardContent>
     );
   }
-
-  const featuredList = safeClusters.slice(0, 3).map((c) => ({
-    id: c.name,
-    title: c.name,
-    coverUrl: '/assets/images/about/about_1.webp',
-    description: `Hosts: ${c.num_hosts}, VMs: ${c.num_vms}, Status: ${c.overall_status}`,
-  }));
-
-  const topRelatedList = safeVMs
-    .sort((a, b) => (b.cpu_usage_mhz || 0) - (a.cpu_usage_mhz || 0))
-    .slice(0, 5)
-    .map((vm) => ({
-      id: vm.uuid || vm.name,
-      name: vm.name,
-      size: vm.memory_gb || 0,
-      price: 0,
-      shortcut: '/assets/icons/platforms/ic_vmware.svg',
-      downloaded: vm.cpu_usage_mhz || 0,
-      ratingNumber: 1,
-      totalReviews: 1,
-    }));
 
   const topCountriesList = safeHosts.slice(0, 5).map((h, i) => ({
     id: h.name,
@@ -139,20 +183,6 @@ export function OverviewAppView() {
       totalFavorites: c.num_vms || 0,
     }));
 
-  const invoiceList = safeDatastores.slice(0, 5).map((ds) => ({
-    id: ds.name,
-    price: Math.round(ds.used_space_gb || 0),
-    status: ds.accessible ? 'active' : 'inactive',
-    category: ds.type || 'N/A',
-    invoiceNumber: ds.name,
-  }));
-
-  // For AppAreaInstalled, ApexCharts expects: [{ name, data: number[] }]
-  const areaInstalledSeries = safeClusters.slice(0, 3).map((c) => ({
-    name: c.name,
-    data: Array(12).fill(Math.round(c.total_storage_gb || 0) / 12),
-  }));
-
   return (
     <DashboardContent maxWidth="xl">
       <Grid container spacing={3}>
@@ -171,7 +201,7 @@ export function OverviewAppView() {
         <Grid size={{ xs: 12, md: 4 }}>
           <AppFeatured list={featuredList} />
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <AppWidgetSummary
             title="Total Clusters"
             percent={0}
@@ -182,7 +212,7 @@ export function OverviewAppView() {
             }}
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <AppWidgetSummary
             title="Total Hosts"
             percent={0}
@@ -194,7 +224,7 @@ export function OverviewAppView() {
             }}
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <AppWidgetSummary
             title="Total Datastores"
             percent={0}
@@ -206,33 +236,31 @@ export function OverviewAppView() {
             }}
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          <AppCurrentDownload
-            title="Resource Usage Breakdown"
-            subheader="CPU, Memory, Storage"
+        <Grid size={{ xs: 12, md: 3 }}>
+          <AppWidgetSummary
+            title="Total VMs"
+            percent={0}
+            total={overview.summary?.total_vms || safeVMs.length}
             chart={{
-              series: [
-                {
-                  label: 'CPU Used (MHz)',
-                  value: Math.round(overview.resource_usage?.used_cpu_mhz || 0),
-                },
-                {
-                  label: 'Memory Used (GB)',
-                  value: Math.round(overview.resource_usage?.used_memory_gb || 0),
-                },
-                {
-                  label: 'Storage Used (GB)',
-                  value: Math.round(overview.resource_usage?.used_storage_gb || 0),
-                },
-                {
-                  label: 'Storage Free (GB)',
-                  value: Math.round(overview.resource_usage?.free_storage_gb || 0),
-                },
-              ],
+              colors: [theme.palette.success.main],
+              categories: safeVMs.slice(0, 8).map((vm) => vm.name || ''),
+              series: safeVMs.slice(0, 8).map((vm) => vm.cpu_usage_mhz || 0),
             }}
           />
         </Grid>
-
+        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+          <AppCurrentDownload
+            title="Storage Breakdown"
+            subheader="Free vs Used Storage"
+            chart={{
+              series: resourceSeries.map((item) => ({ label: item.label, value: item.value })),
+              // colors: resourceChartColors, // REMOVE this line to use theme defaults
+            }}
+          />
+          <Box sx={{ textAlign: 'center', mt: 1, color: 'text.secondary', fontWeight: 500 }}>
+            Total Storage: {totalStorage} GB
+          </Box>
+        </Grid>
         <Grid size={{ xs: 12, lg: 8 }}>
           <AppNewInvoice
             title="Top Datastores"
@@ -240,37 +268,60 @@ export function OverviewAppView() {
             headCells={[
               { id: 'invoiceNumber', label: 'Datastore Name' },
               { id: 'category', label: 'Type' },
-              { id: 'price', label: 'Used (GB)' },
+              { id: 'used', label: 'Used (GB)' },
+              { id: 'total', label: 'Total (GB)' },
               { id: 'status', label: 'Status' },
               { id: '' },
             ]}
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+        <Grid size={{ xs: 12, md: 12, lg: 8 }}>
           <AppTopRelated title="Top VMs by CPU Usage" list={topRelatedList} />
         </Grid>
-        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          <AppTopAuthors title="Top Clusters by VM Count" list={topAuthorsList} />
-        </Grid>
-        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          <Box sx={{ gap: 3, display: 'flex', flexDirection: 'column' }}>
-            <AppWidget
-              title="Running VMs"
-              total={overview.summary?.running_vms || 0}
-              icon="solar:user-rounded-bold"
-              chart={{ series: overview.summary?.running_vms || 0 }}
-            />
-            <AppWidget
-              title="Stopped VMs"
-              total={overview.summary?.stopped_vms || 0}
-              icon="solar:letter-bold"
-              chart={{
-                series: overview.summary?.stopped_vms || 0,
-                colors: [theme.vars.palette.info.light, theme.vars.palette.info.main],
-              }}
-              sx={{ bgcolor: 'info.dark', [`& .${svgColorClasses.root}`]: { color: 'info.light' } }}
-            />
-          </Box>
+        <Grid size={{ xs: 12, md: 6, lg: 4 }} sx={{ height: 420, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          {(() => {
+            // Use resource_usage for RAM values
+            const ru = overview.resource_usage || {};
+            const totalRamAvailable = typeof ru.total_memory_gb === 'number' && ru.total_memory_gb > 0
+              ? ru.total_memory_gb
+              : 0;
+            const totalRamUsed = typeof ru.used_memory_gb === 'number' && ru.used_memory_gb > 0
+              ? ru.used_memory_gb
+              : 0;
+            let percentUsed = totalRamAvailable > 0 ? (totalRamUsed / totalRamAvailable) * 100 : 0;
+            if (!isFinite(percentUsed) || percentUsed < 0) percentUsed = 0;
+            if (percentUsed > 100) percentUsed = 100;
+            percentUsed = Math.round(percentUsed);
+            // Sort VMs by RAM usage, descending, and take top 4 (no padding)
+            const topVMs = safeVMs
+              .slice()
+              .sort((a, b) => (b.memory_gb || 0) - (a.memory_gb || 0))
+              .slice(0, 4);
+            return (
+              <FileStorageOverview
+                total={Number(totalRamAvailable.toFixed(2))}
+                used={Number(totalRamUsed.toFixed(2))}
+                chart={{ series: percentUsed }}
+                data={topVMs.map((vm) => {
+                  const ramGB = typeof vm.memory_gb === 'number' && vm.memory_gb > 0 ? Number(vm.memory_gb.toFixed(2)) : 0;
+                  let ip = '-';
+                  if (typeof vm.ip_addresses === 'string') ip = vm.ip_addresses;
+                  else if (Array.isArray(vm.ip_addresses) && vm.ip_addresses.length > 0) ip = vm.ip_addresses[0];
+                  return {
+                    name: vm.name || '-',
+                    usedStorage: ramGB,
+                    filesCount: '', // not used
+                    icon: (
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <Box component="img" src="/assets/icons/platforms/datacenter.png" sx={{ width: 32, height: 32, mb: 0.5 }} />
+                      </Box>
+                    ),
+                    ip,
+                  };
+                })}
+              />
+            );
+          })()}
         </Grid>
       </Grid>
     </DashboardContent>
