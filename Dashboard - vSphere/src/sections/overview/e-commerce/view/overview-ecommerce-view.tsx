@@ -12,6 +12,8 @@ import {
 } from 'src/_mock';
 
 import { useMockedUser } from 'src/auth/hooks';
+import { fetchWorkOrders } from 'src/lib/api';
+import { useEffect, useState } from 'react';
 
 import { EcommerceWelcome } from '../ecommerce-welcome';
 import { EcommerceNewProducts } from '../ecommerce-new-products';
@@ -25,10 +27,44 @@ import { EcommerceCurrentBalance } from '../ecommerce-current-balance';
 
 // ----------------------------------------------------------------------
 
+// Add the type for work orders
+export interface WorkOrderTableRow {
+  id: string;
+  name: string;
+  os: string;
+  hostVersion: string;
+  cpu: number;
+  ram: number;
+  disk: number;
+  status: string;
+  createdAt: string;
+}
+
 export function OverviewEcommerceView() {
   const { user } = useMockedUser();
 
   const theme = useTheme();
+
+  // Add state for work orders
+  const [workOrders, setWorkOrders] = useState<WorkOrderTableRow[]>([]);
+
+  useEffect(() => {
+    fetchWorkOrders(5).then((data) => {
+      setWorkOrders(
+        (data as any[]).map((order): WorkOrderTableRow => ({
+          id: String(order.id),
+          name: order.name,
+          os: order.os,
+          hostVersion: order.host_version,
+          cpu: order.cpu,
+          ram: order.ram,
+          disk: order.disk,
+          status: order.status,
+          createdAt: order.created_at,
+        }))
+      );
+    });
+  }, []);
 
   return (
     <DashboardContent maxWidth="xl">
@@ -169,14 +205,17 @@ export function OverviewEcommerceView() {
 
         <Grid size={{ xs: 12, md: 6, lg: 8 }}>
           <EcommerceBestSalesman
-            title="Best salesman"
-            tableData={_ecommerceBestSalesman}
+            title="Latest Work Orders"
+            tableData={workOrders}
             headCells={[
-              { id: 'name', label: 'Seller' },
-              { id: 'category', label: 'Product' },
-              { id: 'country', label: 'Country', align: 'center' },
-              { id: 'totalAmount', label: 'Total', align: 'right' },
-              { id: 'rank', label: 'Rank', align: 'right' },
+              { id: 'name', label: 'VM Name' },
+              { id: 'os', label: 'OS' },
+              { id: 'hostVersion', label: 'Host Version' },
+              { id: 'cpu', label: 'CPU' },
+              { id: 'ram', label: 'RAM' },
+              { id: 'disk', label: 'Disk' },
+              { id: 'status', label: 'Status' },
+              { id: 'createdAt', label: 'Requested At' },
             ]}
           />
         </Grid>

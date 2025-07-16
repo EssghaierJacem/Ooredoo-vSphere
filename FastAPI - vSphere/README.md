@@ -94,6 +94,24 @@ CREATE TABLE vms (
 );
 ```
 
+## Work Orders Table (Manual SQL)
+
+Add this table to your PostgreSQL database to support the new Work Order feature:
+
+```sql
+CREATE TABLE workorders (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    os TEXT NOT NULL,
+    host_version TEXT NOT NULL,
+    cpu INT NOT NULL,
+    ram INT NOT NULL,
+    disk NUMERIC(10,2) NOT NULL,
+    status TEXT DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
 ### 3. Configuration
 
 Create a `.env` file in the project root:

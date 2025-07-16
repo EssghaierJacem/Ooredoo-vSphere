@@ -9,19 +9,16 @@ import MenuItem from '@mui/material/MenuItem';
 import { Iconify } from 'src/components/iconify';
 import { Field } from 'src/components/hook-form';
 
-// Static Data for now. 
-const CLUSTER_OPTIONS = [
-  { value: 'cluster-1', label: 'Cluster 1' },
-  { value: 'cluster-2', label: 'Cluster 2' },
-];
-const DATASTORE_OPTIONS = [
-  { value: 'datastore-1', label: 'Datastore 1' },
-  { value: 'datastore-2', label: 'Datastore 2' },
-];
+// Placeholder options (replace with API data in the future)
 const OS_OPTIONS = [
   { value: 'ubuntu-20.04', label: 'Ubuntu 20.04' },
   { value: 'windows-2019', label: 'Windows Server 2019' },
   { value: 'centos-7', label: 'CentOS 7' },
+];
+const HOST_VERSION_OPTIONS = [
+  { value: 'esxi-7.0', label: 'ESXi 7.0' },
+  { value: 'esxi-6.7', label: 'ESXi 6.7' },
+  { value: 'esxi-8.0', label: 'ESXi 8.0' },
 ];
 
 // ----------------------------------------------------------------------
@@ -83,32 +80,26 @@ export function StepOne() {
         slotProps={{ inputLabel: { shrink: true } }}
       />
       <Field.Text
-        name="general.description"
-        label="Description"
-        variant="filled"
-        slotProps={{ inputLabel: { shrink: true } }}
-      />
-      <Field.Text
-        name="general.cluster"
-        label="Cluster"
+        name="general.os"
+        label="OS Type"
         select
         variant="filled"
         slotProps={{ inputLabel: { shrink: true } }}
       >
-        {CLUSTER_OPTIONS.map((option) => (
+        {OS_OPTIONS.map((option) => (
           <MenuItem key={option.value} value={option.value}>
             {option.label}
           </MenuItem>
         ))}
       </Field.Text>
       <Field.Text
-        name="general.datastore"
-        label="Datastore"
+        name="general.hostVersion"
+        label="Host Version"
         select
         variant="filled"
         slotProps={{ inputLabel: { shrink: true } }}
       >
-        {DATASTORE_OPTIONS.map((option) => (
+        {HOST_VERSION_OPTIONS.map((option) => (
           <MenuItem key={option.value} value={option.value}>
             {option.label}
           </MenuItem>
@@ -121,19 +112,6 @@ export function StepOne() {
 export function StepTwo() {
   return (
     <>
-      <Field.Text
-        name="resources.os"
-        label="Operating System"
-        select
-        variant="filled"
-        slotProps={{ inputLabel: { shrink: true } }}
-      >
-        {OS_OPTIONS.map((option) => (
-          <MenuItem key={option.value} value={option.value}>
-            {option.label}
-          </MenuItem>
-        ))}
-      </Field.Text>
       <Field.Text
         name="resources.cpu"
         label="CPU (vCPU)"
@@ -159,30 +137,11 @@ export function StepTwo() {
   );
 }
 
-export function StepThree() {
-  return (
-    <>
-      <Field.Text
-        name="network.ip"
-        label="IP Address"
-        variant="filled"
-        slotProps={{ inputLabel: { shrink: true } }}
-      />
-      <Field.Text
-        name="network.network"
-        label="Network Name"
-        variant="filled"
-        slotProps={{ inputLabel: { shrink: true } }}
-      />
-    </>
-  );
-}
-
 export function StepReview({ values }: { values: any }) {
   // Display a summary of all entered data for review
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <Typography variant="h6" gutterBottom>Review your VM configuration</Typography>
+      <Typography variant="h6" gutterBottom>Review your Work Order</Typography>
       <Box>
         <Typography variant="subtitle2">General Info</Typography>
         {Object.entries(values.general || {}).map(([key, value]) => (
@@ -192,12 +151,6 @@ export function StepReview({ values }: { values: any }) {
       <Box>
         <Typography variant="subtitle2">Resources</Typography>
         {Object.entries(values.resources || {}).map(([key, value]) => (
-          <Typography key={key} variant="body2"><b>{key}:</b> {String(value)}</Typography>
-        ))}
-      </Box>
-      <Box>
-        <Typography variant="subtitle2">Network</Typography>
-        {Object.entries(values.network || {}).map(([key, value]) => (
           <Typography key={key} variant="body2"><b>{key}:</b> {String(value)}</Typography>
         ))}
       </Box>
@@ -219,7 +172,7 @@ export function StepCompleted({ onReset }: { onReset: () => void }) {
         bgcolor: 'background.neutral',
       }}
     >
-      <Typography variant="subtitle1">All steps completed - your VM request is submitted!</Typography>
+      <Typography variant="subtitle1">All steps completed - your Work Order is submitted!</Typography>
       <Button
         variant="outlined"
         onClick={onReset}

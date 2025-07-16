@@ -9,40 +9,32 @@ import Button from '@mui/material/Button';
 
 import { Form } from 'src/components/hook-form';
 
-import { Stepper, StepOne, StepTwo, StepThree, StepReview, StepCompleted } from './form-steps';
+import { Stepper, StepOne, StepTwo, StepReview, StepCompleted } from './form-steps';
+import { postWorkOrder } from 'src/lib/api';
 
 // ----------------------------------------------------------------------
 
 const STEPS = [
   'General Info',
   'Resources',
-  'Network',
   'Review',
 ];
 
 const GeneralSchema = zod.object({
   name: zod.string().min(1, { message: 'VM Name is required!' }),
-  description: zod.string().optional(),
-  cluster: zod.string().min(1, { message: 'Cluster is required!' }),
-  datastore: zod.string().min(1, { message: 'Datastore is required!' }),
+  os: zod.string().min(1, { message: 'OS Type is required!' }),
+  hostVersion: zod.string().min(1, { message: 'Host Version is required!' }),
 });
 
 const ResourcesSchema = zod.object({
-  os: zod.string().min(1, { message: 'OS is required!' }),
   cpu: zod.number({ coerce: true }).int().min(1, { message: 'CPU is required!' }),
   ram: zod.number({ coerce: true }).int().min(1, { message: 'RAM is required!' }),
-  disk: zod.number({ coerce: true }).int().min(1, { message: 'Disk is required!' }),
-});
-
-const NetworkSchema = zod.object({
-  ip: zod.string().min(1, { message: 'IP Address is required!' }),
-  network: zod.string().min(1, { message: 'Network Name is required!' }),
+  disk: zod.number({ coerce: true }).min(1, { message: 'Disk is required!' }),
 });
 
 const WizardSchema = zod.object({
   general: GeneralSchema,
   resources: ResourcesSchema,
-  network: NetworkSchema,
 });
 
 type WizardSchemaType = zod.infer<typeof WizardSchema>;
@@ -52,19 +44,13 @@ type WizardSchemaType = zod.infer<typeof WizardSchema>;
 const defaultValues: WizardSchemaType = {
   general: {
     name: '',
-    description: '',
-    cluster: '',
-    datastore: '',
+    os: '',
+    hostVersion: '',
   },
   resources: {
-    os: '',
     cpu: 1,
     ram: 1,
     disk: 1,
-  },
-  network: {
-    ip: '',
-    network: '',
   },
 };
 
@@ -87,7 +73,7 @@ export function FormWizard() {
   } = methods;
 
   const handleNext = useCallback(
-    async (step?: 'general' | 'resources' | 'network') => {
+    async (step?: 'general' | 'resources') => {
       if (step) {
         const isValid = await trigger(step);
         if (isValid) {
@@ -112,12 +98,22 @@ export function FormWizard() {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      // TODO: send data to backend
-      console.info('DATA', data);
+      const payload = {
+        ...data,
+        requested_at: new Date().toISOString(),
+      };
+      console.log("Submitting work order:", payload); // Debug log
+      await postWorkOrder(payload);
       handleNext();
     } catch (error) {
-      console.error(error);
+      console.error('Failed to submit work order:', error);
+      let errorMsg = '';
+      if (typeof error === 'object' && error !== null && 'message' in error) {
+        errorMsg = (error as { message: string }).message;
+      } else {
+        errorMsg = String(error);
+      }
+      alert('Failed to submit work order: ' + errorMsg); // User feedback
     }
   });
 
@@ -151,8 +147,7 @@ export function FormWizard() {
         >
           {activeStep === 0 && <StepOne />}
           {activeStep === 1 && <StepTwo />}
-          {activeStep === 2 && <StepThree />}
-          {activeStep === 3 && <StepReview values={getValues()} />}
+          {activeStep === 2 && <StepReview values={getValues()} />}
           {completedStep && <StepCompleted onReset={handleReset} />}
         </Box>
 
@@ -174,15 +169,9 @@ export function FormWizard() {
               </Button>
             )}
 
-            {activeStep === 2 && (
-              <Button type="button" variant="contained" onClick={() => handleNext('network')}>
-                Next
-              </Button>
-            )}
-
             {activeStep === STEPS.length - 1 && (
               <Button type="submit" variant="contained" disabled={isSubmitting}>
-                Create VM
+                Create Work Order
               </Button>
             )}
           </Box>

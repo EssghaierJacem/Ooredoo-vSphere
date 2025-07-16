@@ -4,16 +4,12 @@ import type { TableHeadCellProps } from 'src/components/table';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
-import Avatar from '@mui/material/Avatar';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import TableBody from '@mui/material/TableBody';
 import CardHeader from '@mui/material/CardHeader';
 
-import { fCurrency } from 'src/utils/format-number';
-
 import { Label } from 'src/components/label';
-import { FlagIcon } from 'src/components/flag-icon';
 import { Scrollbar } from 'src/components/scrollbar';
 import { TableHeadCustom } from 'src/components/table';
 
@@ -26,12 +22,13 @@ type Props = CardProps & {
   tableData: {
     id: string;
     name: string;
-    rank: string;
-    email: string;
-    category: string;
-    avatarUrl: string;
-    countryCode: string;
-    totalAmount: number;
+    os: string;
+    hostVersion: string;
+    cpu: number;
+    ram: number;
+    disk: number;
+    status: string;
+    createdAt: string;
   }[];
 };
 
@@ -71,35 +68,29 @@ type RowItemProps = {
 function RowItem({ row }: RowItemProps) {
   return (
     <TableRow>
+      <TableCell>{row.name}</TableCell>
+      <TableCell>{row.os}</TableCell>
+      <TableCell>{row.hostVersion}</TableCell>
+      <TableCell>{row.cpu}</TableCell>
+      <TableCell>{row.ram}</TableCell>
+      <TableCell>{row.disk}</TableCell>
       <TableCell>
-        <Box sx={{ gap: 2, display: 'flex', alignItems: 'center' }}>
-          <Avatar alt={row.name} src={row.avatarUrl} />
-          {row.name}
-        </Box>
-      </TableCell>
-
-      <TableCell>{row.category}</TableCell>
-
-      <TableCell align="center">
-        <FlagIcon code={row.countryCode} />
-      </TableCell>
-
-      <TableCell align="right">{fCurrency(row.totalAmount)}</TableCell>
-
-      <TableCell align="right">
         <Label
           variant="soft"
           color={
-            (row.rank === 'Top 1' && 'primary') ||
-            (row.rank === 'Top 2' && 'secondary') ||
-            (row.rank === 'Top 3' && 'info') ||
-            (row.rank === 'Top 4' && 'warning') ||
-            'error'
+            row.status === 'pending'
+              ? 'warning'
+              : row.status === 'approved'
+              ? 'success'
+              : row.status === 'rejected'
+              ? 'error'
+              : 'default'
           }
         >
-          {row.rank}
+          {row.status}
         </Label>
       </TableCell>
+      <TableCell>{new Date(row.createdAt).toLocaleString()}</TableCell>
     </TableRow>
   );
 }
