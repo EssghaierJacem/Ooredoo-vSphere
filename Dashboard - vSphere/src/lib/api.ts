@@ -24,6 +24,9 @@ export const fetchDatastores = (): Promise<any[]> =>
 export const fetchVMs = (): Promise<any[]> =>
   api.get('/vms/').then((res: { data: any[] }) => res.data);
 
+export const fetchNetworks = (): Promise<any[]> =>
+  api.get('/networks/').then((res: { data: any[] }) => res.data);
+
 export const postWorkOrder = (data: any): Promise<any> =>
   api.post('/workorders/', data).then((res) => res.data);
 
