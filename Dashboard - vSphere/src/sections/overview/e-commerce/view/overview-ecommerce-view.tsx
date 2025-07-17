@@ -45,7 +45,6 @@ export function OverviewEcommerceView() {
 
   const theme = useTheme();
 
-  // Add state for work orders
   const [workOrders, setWorkOrders] = useState<WorkOrderTableRow[]>([]);
 
   useEffect(() => {
@@ -203,7 +202,7 @@ export function OverviewEcommerceView() {
           />
         </Grid>
 
-        <Grid size={{ xs: 12, md: 6, lg: 8 }}>
+        <Grid size={{ xs: 12, md: 6, lg: 12 }}>
           <EcommerceBestSalesman
             title="Latest Work Orders"
             tableData={workOrders}
@@ -220,9 +219,6 @@ export function OverviewEcommerceView() {
           />
         </Grid>
 
-        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          <EcommerceLatestProducts title="Latest products" list={_ecommerceLatestProducts} />
-        </Grid>
       </Grid>
     </DashboardContent>
   );

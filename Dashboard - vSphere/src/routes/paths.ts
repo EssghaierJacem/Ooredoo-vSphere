@@ -50,6 +50,10 @@ export const paths = {
       five: `${ROOTS.DASHBOARD}/group/five`,
       six: `${ROOTS.DASHBOARD}/group/six`,
     },
-    workorderRequest: `${ROOTS.DASHBOARD}/workorder/request`,
+    workorder: {
+      detail: (id: string | number) => `${ROOTS.DASHBOARD}/workorder/${id}`,
+      edit: (id: string | number) => `${ROOTS.DASHBOARD}/workorder/${id}/edit`,
+      request: `${ROOTS.DASHBOARD}/workorder/request`,
+    },
   },
 };

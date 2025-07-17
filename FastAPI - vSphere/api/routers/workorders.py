@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Path
 from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
@@ -73,4 +73,55 @@ def list_workorders(db: Session = Depends(get_db), limit: int = 5):
             for o in orders
         ]
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/{workorder_id}")
+def update_workorder(
+    workorder_id: int,
+    workorder_update: dict,
+    db: Session = Depends(get_db)
+):
+    order = db.query(WorkOrder).filter(WorkOrder.id == workorder_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="WorkOrder not found")
+    for key, value in workorder_update.items():
+        if hasattr(order, key):
+            setattr(order, key, value)
+    db.commit()
+    db.refresh(order)
+    return {
+        "id": order.id,
+        "name": order.name,
+        "os": order.os,
+        "host_version": order.host_version,
+        "cpu": order.cpu,
+        "ram": order.ram,
+        "disk": order.disk,
+        "status": order.status,
+        "created_at": order.created_at.isoformat()
+    }
+
+@router.post("/{workorder_id}/approve")
+def approve_workorder(
+    workorder_id: int,
+    db: Session = Depends(get_db)
+):
+    order = db.query(WorkOrder).filter(WorkOrder.id == workorder_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="WorkOrder not found")
+    order.status = "approved"
+    db.commit()
+    db.refresh(order)
+    return {"message": "WorkOrder approved", "id": order.id, "status": order.status}
+
+@router.delete("/{workorder_id}")
+def delete_workorder(
+    workorder_id: int,
+    db: Session = Depends(get_db)
+):
+    order = db.query(WorkOrder).filter(WorkOrder.id == workorder_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="WorkOrder not found")
+    db.delete(order)
+    db.commit()
+    return {"message": "WorkOrder deleted", "id": workorder_id} 
