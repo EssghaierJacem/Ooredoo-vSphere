@@ -123,9 +123,17 @@ export function fToNow(date: DatePickerFormat): string {
   }
   const now = dayjs();
   const d = dayjs(date);
-  // If less than 10 seconds, show 'just now'
-  if (now.diff(d, 'second') < 10) return 'just now';
-  return d.from(now); // e.g. '2 minutes ago', 'an hour ago', etc.
+  if (now.isAfter(d)) {
+    // If less than 10 seconds ago, show 'just now'
+    if (now.diff(d, 'second') < 10) return 'just now';
+    return d.from(now); // e.g. '2 minutes ago', 'an hour ago', etc.
+  } else if (now.isBefore(d)) {
+    // If in the future, show the actual date/time
+    return d.format('DD MMM YYYY, h:mm a');
+  } else {
+    // If exactly now, show the actual date/time
+    return d.format('DD MMM YYYY, h:mm a');
+  }
 }
 
 // ----------------------------------------------------------------------

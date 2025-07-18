@@ -18,6 +18,7 @@ import { Iconify } from 'src/components/iconify';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import { Label } from 'src/components/label';
+import { fToNow } from 'src/utils/format-time';
 
 export default function WorkOrderDetailPage() {
   const { id } = useParams();
@@ -65,14 +66,14 @@ export default function WorkOrderDetailPage() {
   const supportingDatastores = datastores.filter((ds) =>
     (ds.free_space_gb ?? ds.capacity_gb) >= workOrder.disk
   );
-  // Status color logic
+  // Status color logic (case-insensitive, matches table)
   const statusColor =
-    workOrder.status === 'pending'
-      ? 'warning'
-      : workOrder.status === 'approved'
+    workOrder.status?.toLowerCase() === 'approved'
       ? 'success'
-      : workOrder.status === 'rejected'
+      : workOrder.status?.toLowerCase() === 'rejected'
       ? 'error'
+      : workOrder.status?.toLowerCase() === 'pending'
+      ? 'warning'
       : 'default';
 
   const handleEdit = () => {
@@ -131,10 +132,16 @@ export default function WorkOrderDetailPage() {
                 <Typography component="dd">{workOrder.name}</Typography>
                 <Typography component="dt" sx={{ fontWeight: 600 }}>Status:</Typography>
                 <Box component="dd" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Label variant="soft" color={statusColor}>{workOrder.status}</Label>
+                  <Label
+                    variant="soft"
+                    color={statusColor}
+                    sx={{ textTransform: 'capitalize', px: 1.5, py: 0.25, fontSize: 13 }}
+                  >
+                    {workOrder.status?.charAt(0).toUpperCase() + workOrder.status?.slice(1).toLowerCase()}
+                  </Label>
                 </Box>
                 <Typography component="dt" sx={{ fontWeight: 600 }}>Created At:</Typography>
-                <Typography component="dd">{new Date(workOrder.created_at).toLocaleString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}</Typography>
+                <Typography component="dd">{fToNow(workOrder.created_at)}</Typography>
               </Box>
               <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', mt: 3, mb: 1 }}>Resources</Typography>
               <Box component="dl" sx={{ display: 'grid', gridTemplateColumns: 'max-content 1fr', rowGap: 1.5, columnGap: 2 }}>
@@ -198,7 +205,7 @@ export default function WorkOrderDetailPage() {
                   const freeCpu = typeof h.cpu_free_mhz === 'number' ? h.cpu_free_mhz : 0;
                   const freeStorage = typeof h.storage_free_gb === 'number' ? h.storage_free_gb : (typeof h.free_storage_gb === 'number' ? h.free_storage_gb : undefined);
                   return (
-                    <li key={name}>
+                    <li key={h.id || name}>
                       <b>{name}</b>
                       {h.management_ip && <span style={{ color: '#888', marginLeft: 6 }}>({h.management_ip})</span>}
                       <span style={{ marginLeft: 10 }}>
@@ -219,7 +226,7 @@ export default function WorkOrderDetailPage() {
                 <Box sx={{ mt: 1 }}>
                   <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>Closest hosts by available resources:</Typography>
                   {hosts
-                    .map((host) => {
+                    .map((host, idx) => {
                       const freeMem = typeof host.memory_free_gb === 'number' ? host.memory_free_gb : 0;
                       const freeCpu = typeof host.cpu_free_mhz === 'number' ? host.cpu_free_mhz : 0;
                       return {
@@ -233,8 +240,8 @@ export default function WorkOrderDetailPage() {
                     })
                     .sort((a, b) => (a.memDiff + a.cpuDiff) - (b.memDiff + b.cpuDiff))
                     .slice(0, 2)
-                    .map((host) => (
-                      <Box key={host.name} sx={{ ml: 1, mb: 0.5 }}>
+                    .map((host, idx) => (
+                      <Box key={host.id || host.name || idx} sx={{ ml: 1, mb: 0.5 }}>
                         <Typography variant="body2">
                           <b>{host.name}</b> (Free RAM: {host.freeMem.toFixed(2)} GB, Free CPU: {host.freeCpu.toFixed(2)} MHz)
                         </Typography>

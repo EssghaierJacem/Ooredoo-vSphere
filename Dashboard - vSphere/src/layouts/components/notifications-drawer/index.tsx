@@ -79,9 +79,9 @@ export function NotificationsDrawer({ data = [], sx, onSeen, onClearAll, tabData
       </Typography>
 
       {!!totalUnRead && (
-        <Tooltip title="Clear all">
+        <Tooltip title="Mark all as seen">
           <IconButton color="primary" onClick={handleMarkAllAsRead}>
-            <Iconify icon="eva:star-outline" />
+            <Iconify icon="eva:checkmark-circle-2-outline" />
           </IconButton>
         </Tooltip>
       )}
@@ -170,7 +170,7 @@ export function NotificationsDrawer({ data = [], sx, onSeen, onClearAll, tabData
         {renderList()}
 
         <Box sx={{ p: 1 }}>
-          <Button fullWidth size="large">
+          <Button fullWidth size="large" href="/dashboard/two" component="a">
             View all
           </Button>
         </Box>

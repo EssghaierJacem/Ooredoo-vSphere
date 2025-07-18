@@ -24,6 +24,10 @@ import { EcommerceSalesOverview } from '../ecommerce-sales-overview';
 import { EcommerceWidgetSummary } from '../ecommerce-widget-summary';
 import { EcommerceLatestProducts } from '../ecommerce-latest-products';
 import { EcommerceCurrentBalance } from '../ecommerce-current-balance';
+import { TablePaginationCustom } from 'src/components/table/table-pagination-custom';
+import { useTable } from 'src/components/table/use-table';
+import TextField from '@mui/material/TextField';
+import Box from '@mui/material/Box';
 
 // ----------------------------------------------------------------------
 
@@ -46,6 +50,8 @@ export function OverviewEcommerceView() {
   const theme = useTheme();
 
   const [workOrders, setWorkOrders] = useState<WorkOrderTableRow[]>([]);
+  const [search, setSearch] = useState('');
+  const table = useTable({ defaultOrderBy: 'createdAt', defaultOrder: 'desc', defaultRowsPerPage: 5 });
 
   useEffect(() => {
     fetchWorkOrders(5).then((data) => {
@@ -64,6 +70,38 @@ export function OverviewEcommerceView() {
       );
     });
   }, []);
+
+  // Filtering and sorting logic
+  const filtered = workOrders.filter((row) => {
+    const q = search.toLowerCase();
+    return (
+      row.name.toLowerCase().includes(q) ||
+      row.status.toLowerCase().includes(q) ||
+      row.os.toLowerCase().includes(q) ||
+      row.hostVersion.toLowerCase().includes(q)
+    );
+  });
+
+  const sorted = [...filtered].sort((a, b) => {
+    const { order, orderBy } = table;
+    let aValue = a[orderBy as keyof WorkOrderTableRow];
+    let bValue = b[orderBy as keyof WorkOrderTableRow];
+    if (orderBy === 'createdAt') {
+      aValue = new Date(aValue as string).getTime();
+      bValue = new Date(bValue as string).getTime();
+    }
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return order === 'asc' ? aValue - bValue : bValue - aValue;
+    }
+    return order === 'asc'
+      ? String(aValue).localeCompare(String(bValue))
+      : String(bValue).localeCompare(String(aValue));
+  });
+
+  const paginated = sorted.slice(
+    table.page * table.rowsPerPage,
+    table.page * table.rowsPerPage + table.rowsPerPage
+  );
 
   return (
     <DashboardContent maxWidth="xl">
@@ -205,7 +243,7 @@ export function OverviewEcommerceView() {
         <Grid size={{ xs: 12, md: 6, lg: 12 }}>
           <EcommerceBestSalesman
             title="Latest Work Orders"
-            tableData={workOrders}
+            tableData={paginated}
             headCells={[
               { id: 'name', label: 'VM Name' },
               { id: 'os', label: 'OS' },
@@ -216,6 +254,20 @@ export function OverviewEcommerceView() {
               { id: 'status', label: 'Status' },
               { id: 'createdAt', label: 'Requested At' },
             ]}
+            order={table.order}
+            orderBy={table.orderBy}
+            onSort={table.onSort}
+            search={search}
+            onSearch={val => { table.setPage(0); setSearch(val); }}
+            pagination={
+              <TablePaginationCustom
+                count={sorted.length}
+                page={table.page}
+                rowsPerPage={table.rowsPerPage}
+                onPageChange={table.onChangePage}
+                onRowsPerPageChange={table.onChangeRowsPerPage}
+              />
+            }
           />
         </Grid>
 

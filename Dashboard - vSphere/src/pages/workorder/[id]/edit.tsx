@@ -42,7 +42,6 @@ export default function WorkOrderEditPage() {
   const [networks, setNetworks] = useState<any[]>([]);
   const router = useRouter();
   const [initialized, setInitialized] = useState(false);
-  const [didValidatePlacement, setDidValidatePlacement] = useState(false);
 
   useEffect(() => {
     if (id !== undefined) {
@@ -55,17 +54,40 @@ export default function WorkOrderEditPage() {
         fetchNetworks(),
       ])
         .then(([wo, hosts, vms, datastores, networks]) => {
-          setWorkOrder({ ...wo });
+          // Ensure IDs are always strings for select fields
+          // Also, ensure status is always a valid STATUS_OPTIONS value (case-sensitive)
+          let status = STATUS_OPTIONS.includes(wo.status) ? wo.status : STATUS_OPTIONS[0];
+          let host_id = wo.host_id !== undefined && wo.host_id !== null ? String(wo.host_id) : '';
+          let vm_id = wo.vm_id !== undefined && wo.vm_id !== null ? String(wo.vm_id) : '';
+          let datastore_id = wo.datastore_id !== undefined && wo.datastore_id !== null ? String(wo.datastore_id) : '';
+          // If the values are not in the options, use the first available
+          if (hosts.length > 0 && !hosts.some(h => String(h.name) === host_id)) {
+            host_id = String(hosts[0].name);
+          }
+          if (vms.length > 0 && !vms.some(vm => String(vm.name) === vm_id)) {
+            vm_id = String(vms[0].name);
+          }
+          if (datastores.length > 0 && !datastores.some(ds => String(ds.name) === datastore_id)) {
+            datastore_id = String(datastores[0].name);
+          }
+          const normalizedWO = {
+            ...wo,
+            status,
+            host_id,
+            vm_id,
+            datastore_id,
+          };
+          setWorkOrder(normalizedWO);
           setHosts(hosts);
           setVMs(vms);
           setDatastores(datastores);
           setNetworks(networks);
           setInitialized(false); // trigger the next effect
           // Host support logic
-          const host = hosts.find((h) => String(h.id) === String(wo.host_id));
+          const host = hosts.find((h) => String(h.id) === String(host_id));
           if (host) {
-            const enoughRam = host.memory_free_gb >= wo.ram;
-            const enoughCpu = host.cpu_free_mhz >= (wo.cpu * 1000);
+            const enoughRam = host.memory_free_gb >= normalizedWO.ram;
+            const enoughCpu = host.cpu_free_mhz >= (normalizedWO.cpu * 1000);
             if (enoughRam && enoughCpu) {
               setHostSupport(`Host ${host.name} supports this work order.`);
             } else {
@@ -82,34 +104,6 @@ export default function WorkOrderEditPage() {
       setLoading(false);
     }
   }, [id]);
-
-  // Placement select value validation (only on initial load or when options change)
-  useEffect(() => {
-    if (!workOrder || didValidatePlacement) return;
-    let changed = false;
-    let newWorkOrder = { ...workOrder };
-    if (hosts.length > 0 && !hosts.some(h => String(h.id) === String(workOrder.host_id))) {
-      newWorkOrder.host_id = String(hosts[0].id);
-      changed = true;
-    }
-    if (vms.length > 0 && !vms.some(vm => String(vm.id) === String(workOrder.vm_id))) {
-      newWorkOrder.vm_id = String(vms[0].id);
-      changed = true;
-    }
-    if (datastores.length > 0 && !datastores.some(ds => String(ds.id) === String(workOrder.datastore_id))) {
-      newWorkOrder.datastore_id = String(datastores[0].id);
-      changed = true;
-    }
-    if (changed) {
-      setWorkOrder(newWorkOrder);
-    }
-    setDidValidatePlacement(true);
-  }, [hosts, vms, datastores, workOrder, didValidatePlacement]);
-
-  // Reset didValidatePlacement when options change
-  useEffect(() => {
-    setDidValidatePlacement(false);
-  }, [hosts, vms, datastores]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
     setWorkOrder({ ...workOrder, [e.target.name as string]: e.target.value });
@@ -159,8 +153,25 @@ export default function WorkOrderEditPage() {
     setWorkOrder({ ...workOrder, nics });
   };
 
-  const handleSelectChange = (name: string) => (e: any) => {
-    setWorkOrder({ ...workOrder, [name]: String(e.target.value) });
+  const handleSelectChange = (e: any) => {
+    const { name, value } = e.target;
+    const newWorkOrder = { ...workOrder, [name]: String(value) };
+    setWorkOrder(newWorkOrder);
+    // If host is changed, update host support message immediately
+    if (name === 'host_id') {
+      const host = hosts.find((h) => String(h.name) === String(value));
+      if (host) {
+        const enoughRam = host.memory_free_gb >= newWorkOrder.ram;
+        const enoughCpu = host.cpu_free_mhz >= (newWorkOrder.cpu * 1000);
+        if (enoughRam && enoughCpu) {
+          setHostSupport(`Host ${host.name} supports this work order.`);
+        } else {
+          setHostSupport('Selected host may not support the requested resources.');
+        }
+      } else {
+        setHostSupport(null);
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -188,6 +199,11 @@ export default function WorkOrderEditPage() {
   if (error) return <Box sx={{ textAlign: 'center', mt: 8 }}>{error}</Box>;
   if (!workOrder) return <Box sx={{ textAlign: 'center', mt: 8 }}>Work order not found.</Box>;
 
+  // Placement options arrays for robust select logic
+  const HOST_OPTIONS = hosts.map(h => String(h.name));
+  const VM_OPTIONS = vms.map(vm => String(vm.name));
+  const DATASTORE_OPTIONS = datastores.map(ds => String(ds.name));
+
   return (
     <Box sx={{ maxWidth: 1000, mx: 'auto', mt: 6, mb: 6 }}>
       <Paper elevation={4} sx={{ borderRadius: 4, p: 4 }}>
@@ -203,8 +219,8 @@ export default function WorkOrderEditPage() {
                   <Select
                     label="Status"
                     name="status"
-                    value={String(workOrder.status ?? '')}
-                    onChange={handleSelectChange('status')}
+                    value={STATUS_OPTIONS.includes(workOrder.status) ? workOrder.status : STATUS_OPTIONS[0]}
+                    onChange={handleSelectChange}
                   >
                     {STATUS_OPTIONS.map((option) => (
                       <MenuItem key={option} value={option}>{option}</MenuItem>
@@ -270,11 +286,11 @@ export default function WorkOrderEditPage() {
                   <Select
                     label="Host"
                     name="host_id"
-                    value={String(workOrder.host_id ?? '')}
-                    onChange={handleSelectChange('host_id')}
+                    value={HOST_OPTIONS.includes(String(workOrder.host_id)) ? String(workOrder.host_id) : (HOST_OPTIONS[0] || '')}
+                    onChange={handleSelectChange}
                   >
                     {hosts.map((host) => (
-                      <MenuItem key={host.id} value={String(host.id)}>
+                      <MenuItem key={host.name} value={String(host.name)}>
                         {host.name} — RAM: {host.memory_free_gb?.toFixed(1) || '?'}GB free, CPU: {host.cpu_free_mhz?.toFixed(0) || '?'} MHz free, v{host.product_version || '?'}
                       </MenuItem>
                     ))}
@@ -285,11 +301,11 @@ export default function WorkOrderEditPage() {
                   <Select
                     label="VM Template"
                     name="vm_id"
-                    value={String(workOrder.vm_id ?? '')}
-                    onChange={handleSelectChange('vm_id')}
+                    value={VM_OPTIONS.includes(String(workOrder.vm_id)) ? String(workOrder.vm_id) : (VM_OPTIONS[0] || '')}
+                    onChange={handleSelectChange}
                   >
                     {vms.map((vm) => (
-                      <MenuItem key={vm.id} value={String(vm.id)}>{vm.name}</MenuItem>
+                      <MenuItem key={vm.name} value={String(vm.name)}>{vm.name}</MenuItem>
                     ))}
                   </Select>
                 </FormControl>
@@ -298,11 +314,11 @@ export default function WorkOrderEditPage() {
                   <Select
                     label="Datastore"
                     name="datastore_id"
-                    value={String(workOrder.datastore_id ?? '')}
-                    onChange={handleSelectChange('datastore_id')}
+                    value={DATASTORE_OPTIONS.includes(String(workOrder.datastore_id)) ? String(workOrder.datastore_id) : (DATASTORE_OPTIONS[0] || '')}
+                    onChange={handleSelectChange}
                   >
                     {datastores.map((ds) => (
-                      <MenuItem key={ds.id} value={String(ds.id)}>{ds.name} ({ds.capacity_gb}GB)</MenuItem>
+                      <MenuItem key={ds.name} value={String(ds.name)}>{ds.name} ({ds.capacity_gb}GB)</MenuItem>
                     ))}
                   </Select>
                 </FormControl>
@@ -313,8 +329,8 @@ export default function WorkOrderEditPage() {
               <Box sx={CARD_SX}>
                 <Typography variant="subtitle1" sx={{ color: 'secondary.main', mb: 1 }}>Network Interfaces</Typography>
                 {(workOrder.nics || []).map((nic: any, idx: number) => (
-                  <Box key={idx} sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 1, background: '#f8fafc', borderRadius: 2, p: 1 }}>
-                    <FormControl sx={{ minWidth: 180 }}>
+                  <Box key={idx} sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', mb: 2, background: '#f8fafc', borderRadius: 2, p: 2 }}>
+                    <FormControl sx={{ minWidth: 200, flex: '1 1 200px' }}>
                       <InputLabel>Network</InputLabel>
                       <Select
                         label="Network"
@@ -330,15 +346,17 @@ export default function WorkOrderEditPage() {
                       label="Static IP (optional)"
                       value={nic.ip || ''}
                       onChange={e => handleNicChange(idx, 'ip', e.target.value)}
-                      sx={{ width: 150 }}
+                      sx={{ width: 220, flex: '1 1 220px' }}
+                      inputProps={{ style: { fontFamily: 'monospace' } }}
                     />
                     <TextField
                       label="Subnet Mask (optional)"
                       value={nic.mask || ''}
                       onChange={e => handleNicChange(idx, 'mask', e.target.value)}
-                      sx={{ width: 140 }}
+                      sx={{ width: 220, flex: '1 1 220px' }}
+                      inputProps={{ style: { fontFamily: 'monospace' } }}
                     />
-                    <Button variant="outlined" color="error" onClick={() => handleRemoveNic(idx)} sx={{ minWidth: 36, px: 0 }}>-</Button>
+                    <Button variant="outlined" color="error" onClick={() => handleRemoveNic(idx)} sx={{ minWidth: 36, px: 0, height: 40 }}>-</Button>
                   </Box>
                 ))}
                 <Button variant="contained" color="primary" onClick={handleAddNic} sx={{ mt: 1 }}>Add NIC</Button>
@@ -352,7 +370,9 @@ export default function WorkOrderEditPage() {
           )}
           <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
             <Button variant="outlined" color="inherit" onClick={handleCancel}>Cancel</Button>
-            <Button type="submit" variant="contained" color="primary" disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
+            <Button type="submit" variant="contained" color="primary" disabled={saving || !!(hostSupport && hostSupport.includes('not support'))}>
+              {saving ? 'Saving...' : 'Save Changes'}
+            </Button>
           </Box>
         </Box>
         <Snackbar open={success} autoHideDuration={3000} onClose={() => setSuccess(false)} message="Work order updated!" />

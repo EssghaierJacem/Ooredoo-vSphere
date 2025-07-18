@@ -25,6 +25,8 @@ import Button from '@mui/material/Button';
 import { deleteWorkOrder } from 'src/lib/api';
 import Snackbar from '@mui/material/Snackbar';
 import { paths } from 'src/routes/paths';
+import TextField from '@mui/material/TextField';
+import InputAdornment from '@mui/material/InputAdornment';
 
 // ----------------------------------------------------------------------
 
@@ -43,6 +45,12 @@ type Props = CardProps & {
     status: string;
     createdAt: string;
   }[];
+  order?: 'asc' | 'desc';
+  orderBy?: string;
+  onSort?: (id: string) => void;
+  search?: string;
+  onSearch?: (value: string) => void;
+  pagination?: React.ReactNode;
 };
 
 export function EcommerceBestSalesman({
@@ -51,6 +59,12 @@ export function EcommerceBestSalesman({
   tableData,
   headCells,
   sx,
+  order,
+  orderBy,
+  onSort,
+  search,
+  onSearch,
+  pagination,
   ...other
 }: Props) {
   // Add Actions column if not present
@@ -63,11 +77,34 @@ export function EcommerceBestSalesman({
 
   return (
     <Card sx={sx} {...other}>
-      <CardHeader title={title} subheader={subheader} sx={{ mb: 3 }} />
-
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, pt: 2, mb: 3 }}>
+        <Box>
+          <Box component="span" sx={{ fontWeight: 700, fontSize: 22, letterSpacing: 0.5 }}>{title}</Box>
+          {subheader && (
+            <Box component="span" sx={{ color: 'text.secondary', ml: 2 }}>{subheader}</Box>
+          )}
+        </Box>
+        {onSearch && (
+          <TextField
+            value={search}
+            onChange={e => onSearch(e.target.value)}
+            placeholder="Search workorders..."
+            size="small"
+            sx={{ width: 280, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 1 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Iconify icon="eva:search-fill" width={20} color="action" />
+                </InputAdornment>
+              ),
+              sx: { borderRadius: 2 },
+            }}
+          />
+        )}
+      </Box>
       <Scrollbar sx={{ minHeight: 422 }}>
         <Table sx={{ minWidth: 640 }}>
-          <TableHeadCustom headCells={enhancedHeadCells} />
+          <TableHeadCustom headCells={enhancedHeadCells} order={order} orderBy={orderBy} onSort={onSort} />
 
           <TableBody>
             {tableData.map((row) => (
@@ -76,6 +113,7 @@ export function EcommerceBestSalesman({
           </TableBody>
         </Table>
       </Scrollbar>
+      <Box sx={{ px: 3, py: 1 }}>{pagination}</Box>
     </Card>
   );
 }
@@ -130,16 +168,17 @@ function RowItem({ row }: RowItemProps) {
         <Label
           variant="soft"
           color={
-            row.status === 'pending'
-              ? 'warning'
-              : row.status === 'approved'
+            row.status?.toLowerCase() === 'approved'
               ? 'success'
-              : row.status === 'rejected'
+              : row.status?.toLowerCase() === 'rejected'
               ? 'error'
+              : row.status?.toLowerCase() === 'pending'
+              ? 'warning'
               : 'default'
           }
+          sx={{ textTransform: 'capitalize', px: 1.5, py: 0.25, fontSize: 13 }}
         >
-          {row.status}
+          {row.status?.charAt(0).toUpperCase() + row.status?.slice(1).toLowerCase()}
         </Label>
       </TableCell>
       <TableCell>{new Date(row.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}</TableCell>

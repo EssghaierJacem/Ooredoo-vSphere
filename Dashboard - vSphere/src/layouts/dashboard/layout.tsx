@@ -61,8 +61,9 @@ export type DashboardLayoutProps = LayoutBaseProps & {
 
 type Notification = ReturnType<typeof mapWorkOrderToNotification>;
 
-function mapWorkOrderToNotification(order: WorkOrderTableRow) {
-  const date = new Date(order.createdAt);
+function mapWorkOrderToNotification(order: WorkOrderTableRow & { created_at?: string }) {
+  const dateStr = order.created_at || (order as any).createdAt;
+  const date = new Date(dateStr);
   return {
     id: String(order.id),
     type: 'order',
@@ -112,28 +113,24 @@ export function DashboardLayout({
   });
   const pollingRef = useRef<number | null>(null);
 
-  // Persist seen state to localStorage
   useEffect(() => {
     localStorage.setItem('notifications_seen', JSON.stringify(seen));
   }, [seen]);
 
-  // Fetch work orders and map to notifications
   const fetchNotifications = async () => {
-    const data = await fetchWorkOrders(100); // fetch all or a reasonable limit
+    const data = await fetchWorkOrders(100); 
     setNotifications(data.map(mapWorkOrderToNotification));
   };
 
   useEffect(() => {
     fetchNotifications();
-    pollingRef.current = window.setInterval(fetchNotifications, 10000); // poll every 10s
+    pollingRef.current = window.setInterval(fetchNotifications, 10000);
     return () => {
       if (pollingRef.current !== null) clearInterval(pollingRef.current);
     };
   }, []);
 
-  // Toggle seen/unseen
   const handleToggleSeen = (id: string) => setSeen((prev) => ({ ...prev, [id]: !prev[id] }));
-  // Clear all (UI only)
   const handleClearAll = () => setSeen(Object.fromEntries(notifications.map((n) => [n.id, true])));
 
   // Tabs logic
