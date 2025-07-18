@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float
+from sqlalchemy import Column, Integer, String, DateTime, Float, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 
@@ -15,4 +15,9 @@ class WorkOrder(Base):
     ram = Column(Integer, nullable=False)
     disk = Column(Float, nullable=False)
     status = Column(String, default="pending")
-    created_at = Column(DateTime, default=datetime.utcnow) 
+    created_at = Column(DateTime, default=datetime.utcnow)
+    host_id = Column(String)
+    vm_id = Column(String)
+    datastore_id = Column(String)
+    disks = Column(JSON)
+    nics = Column(JSON) 

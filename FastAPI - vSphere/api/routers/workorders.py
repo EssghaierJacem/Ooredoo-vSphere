@@ -17,7 +17,6 @@ def create_workorder(
 ):
     print("Received workorder:", workorder)  # Debug log
     try:
-        # Use requested_at from frontend if provided, else use now
         requested_at = workorder.get("requested_at")
         if requested_at:
             try:
@@ -34,7 +33,12 @@ def create_workorder(
             ram=workorder["resources"]["ram"],
             disk=workorder["resources"]["disk"],
             status="pending",
-            created_at=created_at
+            created_at=created_at,
+            host_id=workorder.get("host_id"),
+            vm_id=workorder.get("vm_id"),
+            datastore_id=workorder.get("datastore_id"),
+            disks=workorder.get("disks"),
+            nics=workorder.get("nics"),
         )
         db.add(new_order)
         db.commit()
@@ -48,7 +52,12 @@ def create_workorder(
             "ram": new_order.ram,
             "disk": new_order.disk,
             "status": new_order.status,
-            "created_at": new_order.created_at.isoformat()
+            "created_at": new_order.created_at.isoformat(),
+            "host_id": new_order.host_id,
+            "vm_id": new_order.vm_id,
+            "datastore_id": new_order.datastore_id,
+            "disks": new_order.disks,
+            "nics": new_order.nics,
         }
     except Exception as e:
         db.rollback()
@@ -68,7 +77,12 @@ def list_workorders(db: Session = Depends(get_db), limit: int = 5):
                 "ram": o.ram,
                 "disk": o.disk,
                 "status": o.status,
-                "created_at": o.created_at.isoformat()
+                "created_at": o.created_at.isoformat(),
+                "host_id": o.host_id,
+                "vm_id": o.vm_id,
+                "datastore_id": o.datastore_id,
+                "disks": o.disks,
+                "nics": o.nics,
             }
             for o in orders
         ]
@@ -98,7 +112,12 @@ def update_workorder(
         "ram": order.ram,
         "disk": order.disk,
         "status": order.status,
-        "created_at": order.created_at.isoformat()
+        "created_at": order.created_at.isoformat(),
+        "host_id": order.host_id,
+        "vm_id": order.vm_id,
+        "datastore_id": order.datastore_id,
+        "disks": order.disks,
+        "nics": order.nics,
     }
 
 @router.post("/{workorder_id}/approve")

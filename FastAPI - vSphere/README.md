@@ -101,14 +101,19 @@ Add this table to your PostgreSQL database to support the new Work Order feature
 ```sql
 CREATE TABLE workorders (
     id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    os TEXT NOT NULL,
-    host_version TEXT NOT NULL,
-    cpu INT NOT NULL,
-    ram INT NOT NULL,
-    disk NUMERIC(10,2) NOT NULL,
-    status TEXT DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    name VARCHAR NOT NULL,
+    os VARCHAR NOT NULL,
+    host_version VARCHAR NOT NULL,
+    cpu INTEGER NOT NULL,
+    ram INTEGER NOT NULL,
+    disk FLOAT NOT NULL,
+    status VARCHAR DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    host_id VARCHAR,
+    vm_id VARCHAR,
+    datastore_id VARCHAR,
+    disks JSONB,
+    nics JSONB
 );
 ```
 
