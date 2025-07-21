@@ -30,6 +30,7 @@ export default function WorkOrderDetailPage() {
   const [openDelete, setOpenDelete] = useState(false);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; color?: 'success' | 'error' }>({ open: false, message: '' });
   const [deleting, setDeleting] = useState(false);
+  const [executing, setExecuting] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -99,6 +100,20 @@ export default function WorkOrderDetailPage() {
     setOpenDelete(false);
   };
 
+  const handleExecute = async () => {
+    setExecuting(true);
+    setSnackbar({ open: false, message: '' });
+    try {
+      const res = await import('src/lib/api').then(m => m.executeWorkOrder(Number(workOrder.id)));
+      setSnackbar({ open: true, message: 'VM provisioning started! ' + (res.message || ''), color: 'success' });
+      setWorkOrder((wo: any) => ({ ...wo, status: 'executed' }));
+    } catch (e: any) {
+      setSnackbar({ open: true, message: e?.response?.data?.detail || 'Failed to execute work order', color: 'error' });
+    } finally {
+      setExecuting(false);
+    }
+  };
+
   return (
     <Box sx={{ maxWidth: 1000, mx: 'auto', mt: 6, mb: 6 }}>
       <Paper elevation={4} sx={{ borderRadius: 4, p: { xs: 2, md: 4 }, background: (theme) => theme.palette.background.default }}>
@@ -165,28 +180,33 @@ export default function WorkOrderDetailPage() {
                       <Box component="dd">
                         {workOrder.disks.map((disk: any, idx: number) => (
                           <Box key={idx} sx={{ mb: 0.5 }}>
-                            Size: <b>{disk.size}</b> GB, Provisioning: <b>{disk.provisioning}</b>
+                            Label: <b>{disk.label || `disk${idx+1}`}</b>, Size: <b>{disk.size}</b> GB, Provisioning: <b>{disk.provisioning}</b>
                           </Box>
                         ))}
                       </Box>
                     </>}
-                    {workOrder.nics && workOrder.nics.length > 0 && <>
-                      <Typography component="dt" sx={{ fontWeight: 600 }}>Network Interfaces:</Typography>
-                      <Box component="dd">
+                    {workOrder.nics && workOrder.nics.length > 0 && (
+                      <Box sx={{ mt: 2 }}>
+                        <Typography variant="subtitle1" sx={{ color: 'secondary.main', mb: 1 }}>Network Interfaces</Typography>
                         {workOrder.nics.map((nic: any, idx: number) => (
-                          <Box key={idx} sx={{ mb: 0.5 }}>
-                            Network: <b>{nic.network_id}</b>{nic.ip && `, IP: ${nic.ip}`}{nic.mask && `, Mask: ${nic.mask}`}
+                          <Box key={idx} sx={{ mb: 0.5, pl: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Typography variant="body2">Network: <b>{nic.network_id}</b></Typography>
+                            {nic.ip_pool_id && <Typography variant="body2">IP Pool: <b>{nic.ip_pool_id}</b></Typography>}
+                            {nic.mask && <Typography variant="body2">Mask: <b>{nic.mask}</b></Typography>}
                           </Box>
                         ))}
                       </Box>
-                    </>}
+                    )}
+                    {workOrder.resource_pool_id && <><Typography component="dt" sx={{ fontWeight: 600, color: 'text.secondary' }}>Resource Pool:</Typography><Typography component="dd">{workOrder.resource_pool_id}</Typography></>}
                   </Box>
                 </>
               )}
               {/* Show Execute button if approved */}
               {workOrder.status?.toLowerCase() === 'approved' && (
                 <Box sx={{ mt: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Button variant="contained" color="success" startIcon={<Iconify icon="solar:play-circle-bold" width={24} />}>Execute</Button>
+                  <Button variant="contained" color="success" startIcon={<Iconify icon="solar:play-circle-bold" width={24} />} onClick={handleExecute} disabled={executing}>
+                    {executing ? 'Executing...' : 'Execute'}
+                  </Button>
                 </Box>
               )}
             </Paper>

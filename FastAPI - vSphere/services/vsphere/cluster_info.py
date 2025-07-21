@@ -110,3 +110,41 @@ def get_cluster_by_name(cluster_name: str):
         
     except Exception as e:
         raise Exception(f"Failed to retrieve cluster '{cluster_name}': {str(e)}")
+
+def get_resource_pools_info():
+    """
+    Get all resource pools in vCenter (across all clusters and standalone hosts).
+    Returns: list of dicts with id, name, parent_cluster, type
+    """
+    try:
+        si = get_vsphere_connection()
+        content = si.RetrieveContent()
+        pools = []
+        for dc in content.rootFolder.childEntity:
+            if hasattr(dc, 'hostFolder'):
+                for entity in dc.hostFolder.childEntity:
+                    # Cluster resource pools
+                    if hasattr(entity, 'resourcePool'):
+                        def walk_pool(pool, parent_cluster):
+                            pools.append({
+                                'id': pool._moId,
+                                'name': pool.name,
+                                'parent': parent_cluster.name if parent_cluster else None,
+                                'type': 'cluster' if hasattr(entity, 'host') else 'host'
+                            })
+                            for child in getattr(pool, 'resourcePool', []):
+                                walk_pool(child, parent_cluster)
+                        walk_pool(entity.resourcePool, entity)
+                    # Standalone host root resource pool
+                    elif hasattr(entity, 'name') and hasattr(entity, 'summary'):
+                        # entity is a HostSystem
+                        if hasattr(entity, 'resourcePool'):
+                            pools.append({
+                                'id': entity.resourcePool._moId,
+                                'name': entity.resourcePool.name,
+                                'parent': entity.name,
+                                'type': 'host'
+                            })
+        return pools
+    except Exception as e:
+        raise Exception(f"Failed to retrieve resource pools: {str(e)}")

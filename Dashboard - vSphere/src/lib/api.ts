@@ -67,4 +67,13 @@ export const fetchWorkOrderById = (id: number | string): Promise<any> =>
     const found = data.find((o: any) => String(o.id) === String(id));
     if (!found) throw new Error('Work order not found');
     return found;
-  }); 
+  });
+
+export const executeWorkOrder = (id: number): Promise<any> =>
+  api.post(`/workorders/${id}/execute`).then((res) => res.data);
+
+export const fetchResourcePools = (): Promise<any[]> =>
+  api.get('/workorders/resource-pools').then((res: { data: any[] }) => res.data);
+
+export const fetchIPPools = (): Promise<any[]> =>
+  api.get('/workorders/ip-pools').then((res: { data: any[] }) => res.data); 

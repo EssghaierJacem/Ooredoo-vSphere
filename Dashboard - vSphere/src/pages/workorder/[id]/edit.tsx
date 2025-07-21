@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'src/routes/hooks/use-params';
-import { fetchWorkOrderById, updateWorkOrder, fetchHosts, fetchVMs, fetchDatastores, fetchNetworks } from 'src/lib/api';
+import { fetchWorkOrderById, updateWorkOrder, fetchHosts, fetchVMs, fetchDatastores, fetchNetworks, fetchResourcePools, fetchIPPools } from 'src/lib/api';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
@@ -40,6 +40,8 @@ export default function WorkOrderEditPage() {
   const [datastores, setDatastores] = useState<any[]>([]);
   const [hostSupport, setHostSupport] = useState<string | null>(null);
   const [networks, setNetworks] = useState<any[]>([]);
+  const [resourcePools, setResourcePools] = useState<any[]>([]);
+  const [ipPools, setIPPools] = useState<any[]>([]);
   const router = useRouter();
   const [initialized, setInitialized] = useState(false);
 
@@ -52,10 +54,11 @@ export default function WorkOrderEditPage() {
         fetchVMs(),
         fetchDatastores(),
         fetchNetworks(),
+        fetchResourcePools(),
+        fetchIPPools(),
       ])
-        .then(([wo, hosts, vms, datastores, networks]) => {
+        .then(([wo, hosts, vms, datastores, networks, resourcePools, ipPools]) => {
           // Ensure IDs are always strings for select fields
-          // Also, ensure status is always a valid STATUS_OPTIONS value (case-sensitive)
           let status = STATUS_OPTIONS.includes(wo.status) ? wo.status : STATUS_OPTIONS[0];
           let host_id = wo.host_id !== undefined && wo.host_id !== null ? String(wo.host_id) : '';
           let vm_id = wo.vm_id !== undefined && wo.vm_id !== null ? String(wo.vm_id) : '';
@@ -82,7 +85,9 @@ export default function WorkOrderEditPage() {
           setVMs(vms);
           setDatastores(datastores);
           setNetworks(networks);
-          setInitialized(false); // trigger the next effect
+          setResourcePools(resourcePools);
+          setIPPools(ipPools);
+          setInitialized(false); 
           // Host support logic
           const host = hosts.find((h) => String(h.id) === String(host_id));
           if (host) {
@@ -177,7 +182,13 @@ export default function WorkOrderEditPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    await updateWorkOrder(Number(id), workOrder);
+    // Ensure resource_pool_id is always set
+    let updatedWorkOrder = { ...workOrder };
+    if (!updatedWorkOrder.resource_pool_id && resourcePools.length > 0) {
+      updatedWorkOrder.resource_pool_id = resourcePools[0].id;
+      setWorkOrder(updatedWorkOrder);
+    }
+    await updateWorkOrder(Number(id), updatedWorkOrder);
     setSaving(false);
     setSuccess(true);
   };
@@ -322,6 +333,22 @@ export default function WorkOrderEditPage() {
                     ))}
                   </Select>
                 </FormControl>
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>Resource Pool</InputLabel>
+                  <Select
+                    label="Resource Pool"
+                    name="resource_pool_id"
+                    value={workOrder.resource_pool_id || (resourcePools[0]?.id || '')}
+                    onChange={handleSelectChange}
+                    required
+                  >
+                    {resourcePools.map((pool) => (
+                      <MenuItem key={pool.id} value={pool.id}>
+                        {pool.name} {pool.parent ? `(${pool.parent}, ${pool.type})` : ''}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Box>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -342,13 +369,18 @@ export default function WorkOrderEditPage() {
                         ))}
                       </Select>
                     </FormControl>
-                    <TextField
-                      label="Static IP (optional)"
-                      value={nic.ip || ''}
-                      onChange={e => handleNicChange(idx, 'ip', e.target.value)}
-                      sx={{ width: 220, flex: '1 1 220px' }}
-                      inputProps={{ style: { fontFamily: 'monospace' } }}
-                    />
+                    <FormControl sx={{ minWidth: 180, flex: '1 1 180px' }}>
+                      <InputLabel>IP Pool</InputLabel>
+                      <Select
+                        label="IP Pool"
+                        value={nic.ip_pool_id || (ipPools[0]?.id || '')}
+                        onChange={e => handleNicChange(idx, 'ip_pool_id', e.target.value)}
+                      >
+                        {ipPools.map((pool) => (
+                          <MenuItem key={pool.id} value={pool.id}>{pool.name} ({pool.description})</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                     <TextField
                       label="Subnet Mask (optional)"
                       value={nic.mask || ''}

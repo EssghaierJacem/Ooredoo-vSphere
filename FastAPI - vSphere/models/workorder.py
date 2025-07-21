@@ -20,4 +20,7 @@ class WorkOrder(Base):
     vm_id = Column(String)
     datastore_id = Column(String)
     disks = Column(JSON)
-    nics = Column(JSON) 
+    nics = Column(JSON)
+    last_execution_log = Column(String)
+    resource_pool_id = Column(String)
+    ip_pool_id = Column(String) 
