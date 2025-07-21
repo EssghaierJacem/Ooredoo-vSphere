@@ -152,6 +152,43 @@ export default function WorkOrderDetailPage() {
                 <Typography component="dt" sx={{ fontWeight: 600 }}>Disk:</Typography>
                 <Typography component="dd">{workOrder.disk} GB</Typography>
               </Box>
+              {/* Show placement, host, VM, datastore, disks, nics if present */}
+              {(workOrder.host_id || workOrder.vm_id || workOrder.datastore_id || (workOrder.disks && workOrder.disks.length) || (workOrder.nics && workOrder.nics.length)) && (
+                <>
+                  <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', mt: 3, mb: 1 }}>Placement & Details</Typography>
+                  <Box component="dl" sx={{ display: 'grid', gridTemplateColumns: 'max-content 1fr', rowGap: 1.5, columnGap: 2 }}>
+                    {workOrder.host_id && <><Typography component="dt" sx={{ fontWeight: 600 }}>Host:</Typography><Typography component="dd">{workOrder.host_id}</Typography></>}
+                    {workOrder.vm_id && <><Typography component="dt" sx={{ fontWeight: 600 }}>VM Template:</Typography><Typography component="dd">{workOrder.vm_id}</Typography></>}
+                    {workOrder.datastore_id && <><Typography component="dt" sx={{ fontWeight: 600 }}>Datastore:</Typography><Typography component="dd">{workOrder.datastore_id}</Typography></>}
+                    {workOrder.disks && workOrder.disks.length > 0 && <>
+                      <Typography component="dt" sx={{ fontWeight: 600 }}>Disks:</Typography>
+                      <Box component="dd">
+                        {workOrder.disks.map((disk: any, idx: number) => (
+                          <Box key={idx} sx={{ mb: 0.5 }}>
+                            Size: <b>{disk.size}</b> GB, Provisioning: <b>{disk.provisioning}</b>
+                          </Box>
+                        ))}
+                      </Box>
+                    </>}
+                    {workOrder.nics && workOrder.nics.length > 0 && <>
+                      <Typography component="dt" sx={{ fontWeight: 600 }}>Network Interfaces:</Typography>
+                      <Box component="dd">
+                        {workOrder.nics.map((nic: any, idx: number) => (
+                          <Box key={idx} sx={{ mb: 0.5 }}>
+                            Network: <b>{nic.network_id}</b>{nic.ip && `, IP: ${nic.ip}`}{nic.mask && `, Mask: ${nic.mask}`}
+                          </Box>
+                        ))}
+                      </Box>
+                    </>}
+                  </Box>
+                </>
+              )}
+              {/* Show Execute button if approved */}
+              {workOrder.status?.toLowerCase() === 'approved' && (
+                <Box sx={{ mt: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Button variant="contained" color="success" startIcon={<Iconify icon="solar:play-circle-bold" width={24} />}>Execute</Button>
+                </Box>
+              )}
             </Paper>
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
