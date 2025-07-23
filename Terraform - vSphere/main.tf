@@ -18,53 +18,64 @@ provider "vsphere" {
 # Add VM, network, and other resources here
 # --- 
 
+data "vsphere_datacenter" "dc" {
+  name = var.datacenter_name
+}
+
+data "vsphere_datastore" "selected" {
+  name          = var.datastore_id
+  datacenter_id = data.vsphere_datacenter.dc.id
+}
+
+data "vsphere_network" "network" {
+  name          = var.nics[0].network_name
+  datacenter_id = data.vsphere_datacenter.dc.id
+}
+
+locals {
+  resolved_datastore_id = startswith(var.datastore_id, "datastore-") ? var.datastore_id : data.vsphere_datastore.selected.id
+}
+
 resource "vsphere_virtual_machine" "vm" {
   name             = var.vm_name
+  folder           = var.folder != "" ? var.folder : null
   resource_pool_id = var.resource_pool_id
-  host_system_id   = var.host_system_id # This should be the vSphere managed object ID (e.g., host-123)
-  datastore_id     = var.datastore_id
+  host_system_id   = var.host_system_id
+  datastore_id     = local.resolved_datastore_id
   num_cpus         = var.cpu
-  memory           = var.ram * 1024 # RAM in MB
-  guest_id         = var.os # Should match vSphere guest IDs (e.g., "ubuntu64Guest")
+  memory           = var.ram * 1024
+  guest_id         = var.template_id != "" ? null : var.os
+  hardware_version = var.hardware_version != "" ? var.hardware_version : null
+  scsi_type        = var.scsi_controller_type != "" ? var.scsi_controller_type : null
 
-  # Optional: folder, cluster, etc. can be added as variables
+  disk {
+    label            = "disk0"
+    size             = 20
+    thin_provisioned = true
+  }
 
-  dynamic "disk" {
-    for_each = var.disks != null ? var.disks : []
+  dynamic "clone" {
+    for_each = var.template_id != "" ? [1] : []
     content {
-      label            = lookup(disk.value, "label", null)
-      size             = lookup(disk.value, "size", null)
-      eagerly_scrub    = lookup(disk.value, "eagerly_scrub", false)
-      thin_provisioned = lookup(disk.value, "provisioning", "thin") == "thin"
-      # Add more disk options as needed
+      template_uuid = var.template_id
+      customize {
+        linux_options {
+          host_name = var.hostname
+          domain    = var.domain
+        }
+        network_interface {
+          ipv4_address = var.ip
+          ipv4_netmask = var.netmask
+        }
+        ipv4_gateway = var.gateway
+      }
     }
   }
 
-  dynamic "network_interface" {
-    for_each = var.nics != null ? var.nics : []
-    content {
-      network_id   = lookup(network_interface.value, "network_id", null)
-      adapter_type = lookup(network_interface.value, "adapter_type", null)
-      # To set static IPs, use the clone/customize block as shown below
-    }
+  network_interface {
+    network_id   = data.vsphere_network.network.id
+    adapter_type = "vmxnet3"
   }
-
-  # Example: Guest customization for static IP (requires a template VM)
-  # clone {
-  #   template_uuid = "your-template-uuid"
-  #   customize {
-  #     linux_options {
-  #       host_name = var.vm_name
-  #       domain    = "local"
-  #     }
-  #     network_interface {
-  #       ipv4_address = lookup(var.nics[0], "ip", null)
-  #       ipv4_netmask = lookup(var.nics[0], "mask", null)
-  #     }
-  #   }
-  # }
-
-  # Optionally add customization, domain, dns, etc.
 
   lifecycle {
     ignore_changes = [disk, network_interface]

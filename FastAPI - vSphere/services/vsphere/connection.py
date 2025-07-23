@@ -64,3 +64,43 @@ def test_connection():
             "message": f"Connection failed: {str(e)}",
             "vcenter_url": settings.VCENTER_URL
         }
+
+def get_folders_info():
+    """
+    Get all VM folders in vCenter.
+    Returns: list of dicts with id and name
+    """
+    try:
+        si = get_vsphere_connection()
+        content = si.RetrieveContent()
+        folders = []
+        for dc in content.rootFolder.childEntity:
+            if hasattr(dc, 'vmFolder'):
+                stack = [dc.vmFolder]
+                while stack:
+                    folder = stack.pop()
+                    if hasattr(folder, 'childEntity'):
+                        for child in folder.childEntity:
+                            if hasattr(child, 'childEntity'):
+                                stack.append(child)
+                            elif hasattr(child, 'name'):
+                                folders.append({'id': getattr(child, '_moId', None), 'name': child.name})
+        return folders
+    except Exception as e:
+        raise Exception(f"Failed to retrieve folder information: {str(e)}")
+
+def get_datacenters_info():
+    """
+    Get all datacenters in vCenter.
+    Returns: list of dicts with id and name
+    """
+    try:
+        si = get_vsphere_connection()
+        content = si.RetrieveContent()
+        datacenters = []
+        for dc in content.rootFolder.childEntity:
+            if hasattr(dc, 'name') and hasattr(dc, '_moId'):
+                datacenters.append({'id': getattr(dc, '_moId', None), 'name': dc.name})
+        return datacenters
+    except Exception as e:
+        raise Exception(f"Failed to retrieve datacenter information: {str(e)}")

@@ -190,7 +190,7 @@ export default function WorkOrderDetailPage() {
                         <Typography variant="subtitle1" sx={{ color: 'secondary.main', mb: 1 }}>Network Interfaces</Typography>
                         {workOrder.nics.map((nic: any, idx: number) => (
                           <Box key={idx} sx={{ mb: 0.5, pl: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Typography variant="body2">Network: <b>{nic.network_id}</b></Typography>
+                            <Typography variant="body2">Network: <b>{nic.network_name || nic.network_id}</b></Typography>
                             {nic.ip_pool_id && <Typography variant="body2">IP Pool: <b>{nic.ip_pool_id}</b></Typography>}
                             {nic.mask && <Typography variant="body2">Mask: <b>{nic.mask}</b></Typography>}
                           </Box>

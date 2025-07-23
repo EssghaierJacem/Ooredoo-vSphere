@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'src/routes/hooks/use-params';
-import { fetchWorkOrderById, updateWorkOrder, fetchHosts, fetchVMs, fetchDatastores, fetchNetworks, fetchResourcePools, fetchIPPools } from 'src/lib/api';
+import { fetchWorkOrderById, updateWorkOrder, fetchHosts, fetchVMs, fetchDatastores, fetchNetworks, fetchResourcePools, fetchIPPools, fetchTemplates, fetchFolders, fetchDatacenters } from 'src/lib/api';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
@@ -42,6 +42,9 @@ export default function WorkOrderEditPage() {
   const [networks, setNetworks] = useState<any[]>([]);
   const [resourcePools, setResourcePools] = useState<any[]>([]);
   const [ipPools, setIPPools] = useState<any[]>([]);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [folders, setFolders] = useState<any[]>([]);
+  const [datacenters, setDatacenters] = useState<any[]>([]);
   const router = useRouter();
   const [initialized, setInitialized] = useState(false);
 
@@ -56,22 +59,31 @@ export default function WorkOrderEditPage() {
         fetchNetworks(),
         fetchResourcePools(),
         fetchIPPools(),
+        fetchTemplates(),
+        fetchFolders(),
+        fetchDatacenters(),
       ])
-        .then(([wo, hosts, vms, datastores, networks, resourcePools, ipPools]) => {
+        .then(([wo, hosts, vms, datastores, networks, resourcePools, ipPools, templates, folders, datacenters]) => {
           // Ensure IDs are always strings for select fields
           let status = STATUS_OPTIONS.includes(wo.status) ? wo.status : STATUS_OPTIONS[0];
           let host_id = wo.host_id !== undefined && wo.host_id !== null ? String(wo.host_id) : '';
           let vm_id = wo.vm_id !== undefined && wo.vm_id !== null ? String(wo.vm_id) : '';
-          let datastore_id = wo.datastore_id !== undefined && wo.datastore_id !== null ? String(wo.datastore_id) : '';
-          // If the values are not in the options, use the first available
-          if (hosts.length > 0 && !hosts.some(h => String(h.name) === host_id)) {
-            host_id = String(hosts[0].name);
+          // Always use the id for datastore_id
+          let datastore_id = '';
+          if (wo.datastore_id && datastores.some(ds => String(ds.id) === String(wo.datastore_id))) {
+            datastore_id = String(wo.datastore_id);
+          } else if (wo.datastore_id && datastores.some(ds => ds.name === wo.datastore_id)) {
+            // If old workorder used name, map to id
+            const found = datastores.find(ds => ds.name === wo.datastore_id);
+            datastore_id = found ? String(found.id) : '';
+          } else if (datastores.length > 0) {
+            datastore_id = String(datastores[0].id);
+          }
+          if (hosts.length > 0 && !hosts.some(h => String(h.id) === host_id)) {
+            host_id = String(hosts[0].id);
           }
           if (vms.length > 0 && !vms.some(vm => String(vm.name) === vm_id)) {
             vm_id = String(vms[0].name);
-          }
-          if (datastores.length > 0 && !datastores.some(ds => String(ds.name) === datastore_id)) {
-            datastore_id = String(datastores[0].name);
           }
           const normalizedWO = {
             ...wo,
@@ -87,6 +99,9 @@ export default function WorkOrderEditPage() {
           setNetworks(networks);
           setResourcePools(resourcePools);
           setIPPools(ipPools);
+          setTemplates(templates);
+          setFolders(folders);
+          setDatacenters(datacenters);
           setInitialized(false); 
           // Host support logic
           const host = hosts.find((h) => String(h.id) === String(host_id));
@@ -146,11 +161,11 @@ export default function WorkOrderEditPage() {
   // NIC management
   const handleNicChange = (idx: number, field: string, value: any) => {
     const nics = [...(workOrder.nics || [])];
-    nics[idx] = { ...nics[idx], [field]: field === 'network_id' ? String(value) : value };
+    nics[idx] = { ...nics[idx], [field]: field === 'network_name' ? String(value) : value };
     setWorkOrder({ ...workOrder, nics });
   };
   const handleAddNic = () => {
-    setWorkOrder({ ...workOrder, nics: [...(workOrder.nics || []), { network_id: '', ip: '' }] });
+    setWorkOrder({ ...workOrder, nics: [...(workOrder.nics || []), { network_name: '', ip: '' }] });
   };
   const handleRemoveNic = (idx: number) => {
     const nics = [...(workOrder.nics || [])];
@@ -164,7 +179,7 @@ export default function WorkOrderEditPage() {
     setWorkOrder(newWorkOrder);
     // If host is changed, update host support message immediately
     if (name === 'host_id') {
-      const host = hosts.find((h) => String(h.name) === String(value));
+      const host = hosts.find((h) => String(h.id) === String(value));
       if (host) {
         const enoughRam = host.memory_free_gb >= newWorkOrder.ram;
         const enoughCpu = host.cpu_free_mhz >= (newWorkOrder.cpu * 1000);
@@ -188,7 +203,26 @@ export default function WorkOrderEditPage() {
       updatedWorkOrder.resource_pool_id = resourcePools[0].id;
       setWorkOrder(updatedWorkOrder);
     }
-    await updateWorkOrder(Number(id), updatedWorkOrder);
+    // Ensure all fields are included in the update payload
+    const payload = {
+      ...updatedWorkOrder,
+      disks: updatedWorkOrder.disks || [],
+      nics: updatedWorkOrder.nics || [],
+      template_id: updatedWorkOrder.template_id || '',
+      hardware_version: updatedWorkOrder.hardware_version || '',
+      scsi_controller_type: updatedWorkOrder.scsi_controller_type || '',
+      folder_id: updatedWorkOrder.folder_id || '',
+      network_id: updatedWorkOrder.network_id || '',
+      hostname: updatedWorkOrder.hostname || '',
+      ip: updatedWorkOrder.ip || '',
+      netmask: updatedWorkOrder.netmask || '',
+      gateway: updatedWorkOrder.gateway || '',
+      domain: updatedWorkOrder.domain || '',
+      os: updatedWorkOrder.os || '',
+      datacenter_name: updatedWorkOrder.datacenter_name || 'Datacenter',
+    };
+    const saved = await updateWorkOrder(Number(id), payload);
+    setWorkOrder(saved);
     setSaving(false);
     setSuccess(true);
   };
@@ -210,10 +244,36 @@ export default function WorkOrderEditPage() {
   if (error) return <Box sx={{ textAlign: 'center', mt: 8 }}>{error}</Box>;
   if (!workOrder) return <Box sx={{ textAlign: 'center', mt: 8 }}>Work order not found.</Box>;
 
+  // Determine if a template is selected
+  const isTemplateSelected = !!workOrder.template_id;
+
+  // Robust validation for manual VM creation (no template)
+  const missingFields: string[] = [];
+  if (!isTemplateSelected) {
+    if (!workOrder.os) missingFields.push('OS');
+    if (!workOrder.hardware_version) missingFields.push('Hardware Version');
+    if (!workOrder.scsi_controller_type) missingFields.push('SCSI Controller Type');
+    if (!workOrder.hostname) missingFields.push('Hostname');
+    if (!workOrder.ip) missingFields.push('IPv4 Address');
+    if (!workOrder.netmask) missingFields.push('IPv4 Netmask');
+    if (!workOrder.gateway) missingFields.push('IPv4 Gateway');
+    if (!workOrder.domain) missingFields.push('Domain');
+    if (!workOrder.disks || workOrder.disks.length === 0) missingFields.push('At least one Disk');
+    if (!workOrder.nics || workOrder.nics.length === 0) missingFields.push('At least one NIC');
+  }
+  const isManualValid = missingFields.length === 0;
+
   // Placement options arrays for robust select logic
-  const HOST_OPTIONS = hosts.map(h => String(h.name));
+  const HOST_OPTIONS = hosts.map(h => String(h.id));
   const VM_OPTIONS = vms.map(vm => String(vm.name));
-  const DATASTORE_OPTIONS = datastores.map(ds => String(ds.name));
+  const selectedHost = hosts.find(h => String(h.id) === String(workOrder.host_id));
+  const filteredDatastores = selectedHost ? datastores.filter(ds => selectedHost.accessible_datastores.some((ads: any) => ads.id === ds.id)) : datastores;
+  const filteredNetworks = selectedHost ? networks.filter(net => selectedHost.accessible_networks.some((an: any) => an.name === net.name)) : networks;
+  const DATASTORE_OPTIONS = filteredDatastores.map(ds => String(ds.id));
+
+  // Validation: Prevent saving if selected datastore/network is not accessible from selected host
+  const isDatastoreValid = !workOrder.datastore_id || (selectedHost && selectedHost.accessible_datastores.some((ads: any) => ads.id === workOrder.datastore_id));
+  const isNetworkValid = true; // Allow any network for now
 
   return (
     <Box sx={{ maxWidth: 1000, mx: 'auto', mt: 6, mb: 6 }}>
@@ -239,8 +299,44 @@ export default function WorkOrderEditPage() {
                   </Select>
                 </FormControl>
                 <TextField label="Created At" name="created_at" value={new Date(workOrder.created_at).toLocaleString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })} fullWidth disabled sx={{ mb: 2 }} />
-                <TextField label="OS" name="os" value={workOrder.os || ''} fullWidth disabled sx={{ mb: 2 }} />
-                <TextField label="Host Type/Version" name="host_version" value={workOrder.host_version || ''} fullWidth disabled sx={{ mb: 2 }} />
+                {/* Only show guest customization fields if template is selected, otherwise require all technical fields */}
+                {isTemplateSelected ? (
+                  <>
+                    <TextField label="Hostname" name="hostname" value={workOrder.hostname || ''} onChange={handleChange} fullWidth sx={{ mb: 2 }} helperText="The hostname for the VM (e.g., myvm01)." />
+                    <TextField label="IPv4 Address" name="ip" value={workOrder.ip || ''} onChange={handleChange} fullWidth sx={{ mb: 2 }} helperText="The static IPv4 address to assign to the VM." />
+                    <TextField label="IPv4 Netmask" name="netmask" value={workOrder.netmask || ''} onChange={handleChange} fullWidth sx={{ mb: 2 }} helperText="The subnet mask for the VM's network (e.g., 255.255.255.0)." />
+                    <TextField label="IPv4 Gateway" name="gateway" value={workOrder.gateway || ''} onChange={handleChange} fullWidth sx={{ mb: 2 }} helperText="The default gateway for the VM's network." />
+                    <TextField label="Domain" name="domain" value={workOrder.domain || ''} onChange={handleChange} fullWidth sx={{ mb: 2 }} helperText="The DNS domain for the VM (e.g., example.com)." />
+                  </>
+                ) : (
+                  <>
+                    <TextField label="Hostname" name="hostname" value={workOrder.hostname || ''} onChange={handleChange} fullWidth sx={{ mb: 2 }} helperText="The hostname for the VM (e.g., myvm01)." required />
+                    <TextField label="OS" name="os" value={workOrder.os || ''} onChange={handleChange} fullWidth sx={{ mb: 2 }} helperText="The guest OS type (e.g., ubuntu-20.04, windows-2019)." required />
+                    <TextField label="Hardware Version" name="hardware_version" value={workOrder.hardware_version || ''} onChange={handleChange} fullWidth sx={{ mb: 2 }} helperText="The VM hardware version (e.g., 17)." required />
+                    <TextField label="SCSI Controller Type" name="scsi_controller_type" value={workOrder.scsi_controller_type || ''} onChange={handleChange} fullWidth sx={{ mb: 2 }} helperText="The SCSI controller type (e.g., pvscsi, lsilogic)." required />
+                    <TextField label="IPv4 Address" name="ip" value={workOrder.ip || ''} onChange={handleChange} fullWidth sx={{ mb: 2 }} helperText="The static IPv4 address to assign to the VM." required />
+                    <TextField label="IPv4 Netmask" name="netmask" value={workOrder.netmask || ''} onChange={handleChange} fullWidth sx={{ mb: 2 }} helperText="The subnet mask for the VM's network (e.g., 255.255.255.0)." required />
+                    <TextField label="IPv4 Gateway" name="gateway" value={workOrder.gateway || ''} onChange={handleChange} fullWidth sx={{ mb: 2 }} helperText="The default gateway for the VM's network." required />
+                    <TextField label="Domain" name="domain" value={workOrder.domain || ''} onChange={handleChange} fullWidth sx={{ mb: 2 }} helperText="The DNS domain for the VM (e.g., example.com)." required />
+                    {/* Disk and NIC layout fields would go here if you want to expose them */}
+                  </>
+                )}
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>Datacenter</InputLabel>
+                  <Tooltip title="Select the vSphere datacenter for resource lookups" placement="top" arrow>
+                    <Select
+                      label="Datacenter"
+                      name="datacenter_name"
+                      value={workOrder.datacenter_name || (datacenters[0]?.name || 'Datacenter')}
+                      onChange={handleSelectChange}
+                      required
+                    >
+                      {datacenters.map((dc) => (
+                        <MenuItem key={dc.id} value={dc.name}>{dc.name}</MenuItem>
+                      ))}
+                    </Select>
+                  </Tooltip>
+                </FormControl>
               </Box>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -294,60 +390,86 @@ export default function WorkOrderEditPage() {
               <Box sx={CARD_SX}>
                 <FormControl fullWidth sx={{ mb: 2 }}>
                   <InputLabel>Host</InputLabel>
-                  <Select
-                    label="Host"
-                    name="host_id"
-                    value={HOST_OPTIONS.includes(String(workOrder.host_id)) ? String(workOrder.host_id) : (HOST_OPTIONS[0] || '')}
-                    onChange={handleSelectChange}
-                  >
-                    {hosts.map((host) => (
-                      <MenuItem key={host.name} value={String(host.name)}>
-                        {host.name} — RAM: {host.memory_free_gb?.toFixed(1) || '?'}GB free, CPU: {host.cpu_free_mhz?.toFixed(0) || '?'} MHz free, v{host.product_version || '?'}
-                      </MenuItem>
-                    ))}
-                  </Select>
+                  <Tooltip title="Select the ESXi host to place the VM on. Only hosts in the selected cluster are shown." placement="top" arrow>
+                    <Select
+                      label="Host"
+                      name="host_id"
+                      value={HOST_OPTIONS.includes(String(workOrder.host_id)) ? String(workOrder.host_id) : (HOST_OPTIONS[0] || '')}
+                      onChange={handleSelectChange}
+                    >
+                      {hosts.map((host) => (
+                        <MenuItem key={host.id} value={String(host.id)}>
+                          {host.name} — RAM: {host.memory_free_gb?.toFixed(1) || '?'}GB free, CPU: {host.cpu_free_mhz?.toFixed(0) || '?'} MHz free, v{host.product_version || '?'}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </Tooltip>
                 </FormControl>
                 <FormControl fullWidth sx={{ mb: 2 }}>
                   <InputLabel>VM Template</InputLabel>
-                  <Select
-                    label="VM Template"
-                    name="vm_id"
-                    value={VM_OPTIONS.includes(String(workOrder.vm_id)) ? String(workOrder.vm_id) : (VM_OPTIONS[0] || '')}
-                    onChange={handleSelectChange}
-                  >
-                    {vms.map((vm) => (
-                      <MenuItem key={vm.name} value={String(vm.name)}>{vm.name}</MenuItem>
-                    ))}
-                  </Select>
+                  <Tooltip title="Select the VM template to clone from. Only templates available in vCenter are shown. Leave blank to not use a template." placement="top" arrow>
+                    <Select
+                      label="VM Template"
+                      name="template_id"
+                      value={workOrder.template_id || ''}
+                      onChange={handleSelectChange}
+                    >
+                      <MenuItem value="">(No template)</MenuItem>
+                      {templates.map((template) => (
+                        <MenuItem key={template.uuid} value={template.uuid}>
+                          {template.name} ({template.guest_full_name || template.guest_id})
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </Tooltip>
+                </FormControl>
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>Folder</InputLabel>
+                  <Tooltip title="Select the vSphere folder to place the VM in. Folders help organize VMs in vCenter." placement="top" arrow>
+                    <Select
+                      label="Folder"
+                      name="folder_id"
+                      value={workOrder.folder_id || (folders[0]?.id || '')}
+                      onChange={handleSelectChange}
+                    >
+                      {folders.map((folder) => (
+                        <MenuItem key={folder.id} value={folder.id}>{folder.name}</MenuItem>
+                      ))}
+                    </Select>
+                  </Tooltip>
                 </FormControl>
                 <FormControl fullWidth sx={{ mb: 2 }}>
                   <InputLabel>Datastore</InputLabel>
-                  <Select
-                    label="Datastore"
-                    name="datastore_id"
-                    value={DATASTORE_OPTIONS.includes(String(workOrder.datastore_id)) ? String(workOrder.datastore_id) : (DATASTORE_OPTIONS[0] || '')}
-                    onChange={handleSelectChange}
-                  >
-                    {datastores.map((ds) => (
-                      <MenuItem key={ds.name} value={String(ds.name)}>{ds.name} ({ds.capacity_gb}GB)</MenuItem>
-                    ))}
-                  </Select>
+                  <Tooltip title="Select the datastore for VM storage. Only datastores accessible from the selected host are shown." placement="top" arrow>
+                    <Select
+                      label="Datastore"
+                      name="datastore_id"
+                      value={DATASTORE_OPTIONS.includes(String(workOrder.datastore_id)) ? String(workOrder.datastore_id) : (DATASTORE_OPTIONS[0] || '')}
+                      onChange={handleSelectChange}
+                    >
+                      {filteredDatastores.map((ds) => (
+                        <MenuItem key={ds.id} value={String(ds.id)}>{ds.name} ({ds.capacity_gb}GB)</MenuItem>
+                      ))}
+                    </Select>
+                  </Tooltip>
                 </FormControl>
                 <FormControl fullWidth sx={{ mb: 2 }}>
                   <InputLabel>Resource Pool</InputLabel>
-                  <Select
-                    label="Resource Pool"
-                    name="resource_pool_id"
-                    value={workOrder.resource_pool_id || (resourcePools[0]?.id || '')}
-                    onChange={handleSelectChange}
-                    required
-                  >
-                    {resourcePools.map((pool) => (
-                      <MenuItem key={pool.id} value={pool.id}>
-                        {pool.name} {pool.parent ? `(${pool.parent}, ${pool.type})` : ''}
-                      </MenuItem>
-                    ))}
-                  </Select>
+                  <Tooltip title="Select the resource pool for the VM. Resource pools allow resource management within clusters." placement="top" arrow>
+                    <Select
+                      label="Resource Pool"
+                      name="resource_pool_id"
+                      value={workOrder.resource_pool_id || (resourcePools[0]?.id || '')}
+                      onChange={handleSelectChange}
+                      required
+                    >
+                      {resourcePools.map((pool) => (
+                        <MenuItem key={pool.id} value={pool.id}>
+                          {pool.name} {pool.parent ? `(${pool.parent}, ${pool.type})` : ''}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </Tooltip>
                 </FormControl>
               </Box>
             </Grid>
@@ -361,11 +483,11 @@ export default function WorkOrderEditPage() {
                       <InputLabel>Network</InputLabel>
                       <Select
                         label="Network"
-                        value={String(nic.network_id ?? '')}
-                        onChange={e => handleNicChange(idx, 'network_id', e.target.value)}
+                        value={String(nic.network_name ?? '')}
+                        onChange={e => handleNicChange(idx, 'network_name', e.target.value)}
                       >
-                        {networks.map((net) => (
-                          <MenuItem key={net.id} value={String(net.id)}>{net.name} (VLAN: {net.vlan}, {net.type})</MenuItem>
+                        {filteredNetworks.map((net) => (
+                          <MenuItem key={net.id} value={net.name}>{net.name} (VLAN: {net.vlan}, {net.type})</MenuItem>
                         ))}
                       </Select>
                     </FormControl>
@@ -400,9 +522,19 @@ export default function WorkOrderEditPage() {
               {hostSupport}
             </Alert>
           )}
+          {!isDatastoreValid && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              Selected datastore is not accessible from the selected host.
+            </Alert>
+          )}
+          {!isTemplateSelected && !isManualValid && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              Please fill in all required fields for manual VM creation: {missingFields.join(', ')}
+            </Alert>
+          )}
           <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
             <Button variant="outlined" color="inherit" onClick={handleCancel}>Cancel</Button>
-            <Button type="submit" variant="contained" color="primary" disabled={saving || !!(hostSupport && hostSupport.includes('not support'))}>
+            <Button type="submit" variant="contained" color="primary" disabled={saving || !!(hostSupport && hostSupport.includes('not support')) || !isDatastoreValid || (!isTemplateSelected && !isManualValid)}>
               {saving ? 'Saving...' : 'Save Changes'}
             </Button>
           </Box>

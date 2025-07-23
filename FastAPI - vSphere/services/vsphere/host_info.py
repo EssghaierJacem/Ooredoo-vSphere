@@ -34,7 +34,24 @@ def get_hosts_info():
                         used_cpu_mhz = quick_stats.overallCpuUsage or 0
                         free_cpu_mhz = total_cpu_mhz - used_cpu_mhz
 
+                        # Find accessible datastores
+                        accessible_datastores = []
+                        if hasattr(h, 'datastore'):
+                            for ds in h.datastore:
+                                accessible_datastores.append({
+                                    'id': getattr(ds, '_moId', None),
+                                    'name': ds.name
+                                })
+                        # Find accessible networks
+                        accessible_networks = []
+                        if hasattr(h, 'network'):
+                            for net in h.network:
+                                accessible_networks.append({
+                                    'id': getattr(net, '_moId', None),
+                                    'name': net.name
+                                })
                         hosts.append({
+                            'id': h._moId,
                             'name': h.name,
                             'cluster': cluster.name,
                             'cpu_model': hw.cpuPkg[0].description,
@@ -51,6 +68,8 @@ def get_hosts_info():
                             'management_ip': summary.managementServerIp or "N/A",
                             'product_name': summary.config.product.name,
                             'product_version': summary.config.product.version,
+                            'accessible_datastores': accessible_datastores,
+                            'accessible_networks': accessible_networks,
                         })
         
         return hosts

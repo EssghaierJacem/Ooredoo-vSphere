@@ -76,4 +76,13 @@ export const fetchResourcePools = (): Promise<any[]> =>
   api.get('/workorders/resource-pools').then((res: { data: any[] }) => res.data);
 
 export const fetchIPPools = (): Promise<any[]> =>
-  api.get('/workorders/ip-pools').then((res: { data: any[] }) => res.data); 
+  api.get('/workorders/ip-pools').then((res: { data: any[] }) => res.data);
+
+export const fetchTemplates = (): Promise<any[]> =>
+  api.get('/vms/templates/all').then((res: { data: any[] }) => res.data);
+
+export const fetchFolders = (): Promise<any[]> =>
+  api.get('/workorders/folders').then((res: { data: any[] }) => res.data);
+
+export const fetchDatacenters = (): Promise<any[]> =>
+  api.get('/workorders/datacenters').then((res: { data: any[] }) => res.data); 

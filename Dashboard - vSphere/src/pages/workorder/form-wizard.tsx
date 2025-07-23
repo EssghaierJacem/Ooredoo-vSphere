@@ -30,6 +30,7 @@ const ResourcesSchema = zod.object({
   cpu: zod.number({ coerce: true }).int().min(1, { message: 'CPU is required!' }),
   ram: zod.number({ coerce: true }).int().min(1, { message: 'RAM is required!' }),
   disk: zod.number({ coerce: true }).min(1, { message: 'Disk is required!' }),
+  // host_id and template_id removed from creation schema
 });
 
 const WizardSchema = zod.object({
@@ -51,6 +52,7 @@ const defaultValues: WizardSchemaType = {
     cpu: 1,
     ram: 1,
     disk: 1,
+    // host_id and template_id removed from creation defaults
   },
 };
 

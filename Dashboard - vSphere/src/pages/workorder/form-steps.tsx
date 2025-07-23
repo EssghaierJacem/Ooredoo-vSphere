@@ -5,15 +5,21 @@ import MuiStepper from '@mui/material/Stepper';
 import StepLabel from '@mui/material/StepLabel';
 import Typography from '@mui/material/Typography';
 import MenuItem from '@mui/material/MenuItem';
+import { useEffect, useState } from 'react';
+import { fetchHosts, fetchTemplates } from 'src/lib/api';
 
 import { Iconify } from 'src/components/iconify';
 import { Field } from 'src/components/hook-form';
 
-// Placeholder options (replace with API data in the future)
+// Valid vSphere guest_id options
 const OS_OPTIONS = [
-  { value: 'ubuntu-20.04', label: 'Ubuntu 20.04' },
-  { value: 'windows-2019', label: 'Windows Server 2019' },
-  { value: 'centos-7', label: 'CentOS 7' },
+  { value: 'ubuntu64Guest', label: 'Ubuntu 20.04 / 22.04 (64-bit)' },
+  { value: 'centos7_64Guest', label: 'CentOS 7 (64-bit)' },
+  { value: 'windows9_64Guest', label: 'Windows 10 (64-bit)' },
+  { value: 'debian10_64Guest', label: 'Debian 10 (64-bit)' },
+  { value: 'rhel7_64Guest', label: 'Red Hat Enterprise Linux 7 (64-bit)' },
+  { value: 'otherGuest64', label: 'Other 64-bit Linux' },
+  // Add more as needed
 ];
 const HOST_VERSION_OPTIONS = [
   { value: 'esxi-7.0', label: 'ESXi 7.0' },
@@ -110,6 +116,12 @@ export function StepOne() {
 }
 
 export function StepTwo() {
+  const [hosts, setHosts] = useState<any[]>([]);
+  const [templates, setTemplates] = useState<any[]>([]);
+  useEffect(() => {
+    fetchHosts().then(setHosts);
+    fetchTemplates().then(setTemplates);
+  }, []);
   return (
     <>
       <Field.Text
@@ -133,6 +145,7 @@ export function StepTwo() {
         variant="filled"
         slotProps={{ inputLabel: { shrink: true } }}
       />
+      {/* Host and VM Template selection removed from creation form. Only available in edit. */}
     </>
   );
 }
