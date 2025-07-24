@@ -8,9 +8,9 @@ terraform {
 }
 
 provider "vsphere" {
-  user                 = "X"
-  password             = "X"
-  vsphere_server       = "X"
+  user                 = "administrator@vsphere.local"
+  password             = "Jess24793920@"
+  vsphere_server       = "192.168.1.50"
   allow_unverified_ssl = true
 }
 

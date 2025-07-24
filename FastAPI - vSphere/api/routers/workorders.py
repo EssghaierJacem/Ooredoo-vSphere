@@ -261,9 +261,9 @@ def execute_workorder(
     try:
         tf_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../Terraform - vSphere'))
         env = os.environ.copy()
-        env["TF_VAR_vsphere_user"] = "X"  
-        env["TF_VAR_vsphere_password"] = "X"     
-        env["TF_VAR_vsphere_server"] = "X"        
+        env["TF_VAR_vsphere_user"] = "administrator@vsphere.local"  
+        env["TF_VAR_vsphere_password"] = "Jess24793920@"     
+        env["TF_VAR_vsphere_server"] = "192.168.1.50"        
         result_init = subprocess.run([
             terraform_bin, "init"
         ], cwd=tf_dir, capture_output=True, text=True, env=env)
