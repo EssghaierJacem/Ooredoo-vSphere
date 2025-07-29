@@ -55,5 +55,10 @@ export const paths = {
       edit: (id: string | number) => `${ROOTS.DASHBOARD}/workorder/${id}/edit`,
       request: `${ROOTS.DASHBOARD}/workorder/request`,
     },
+    workorder_vni: {
+      detail: (id: string | number) => `${ROOTS.DASHBOARD}/workorder_vni/${id}`,
+      edit: (id: string | number) => `${ROOTS.DASHBOARD}/workorder_vni/${id}/edit`,
+      request: `${ROOTS.DASHBOARD}/workorder_vni/request`,
+    },
   },
 };

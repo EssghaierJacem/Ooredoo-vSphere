@@ -23,6 +23,7 @@ const PageSix = lazy(() => import('src/pages/dashboard/six'));
 const WorkorderRequestFormPage = lazy(() => import('src/pages/workorder/request-form'));
 const WorkorderDetailPage = lazy(() => import('src/pages/workorder/[id]'));
 const WorkorderEditPage = lazy(() => import('src/pages/workorder/[id]/edit'));
+const VNIWorkorderRequestFormPage = lazy(() => import('src/pages/workorder_vni/request-form'));
 // ----------------------------------------------------------------------
 
 function SuspenseOutlet() {
@@ -59,6 +60,7 @@ export const dashboardRoutes: RouteObject[] = [
       { path: 'workorder/request', element: <WorkorderRequestFormPage /> },
       { path: 'workorder/:id', element: <WorkorderDetailPage /> },
       { path: 'workorder/:id/edit', element: <WorkorderEditPage /> },
+      { path: 'workorder_vni/request', element: <VNIWorkorderRequestFormPage /> },
     ],
   },
 ];

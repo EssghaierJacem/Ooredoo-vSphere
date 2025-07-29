@@ -11,6 +11,7 @@ import { MotionLazy } from 'src/components/animate/motion-lazy';
 import { SettingsDrawer, defaultSettings, SettingsProvider } from 'src/components/settings';
 
 import { AuthProvider } from 'src/auth/context/jwt';
+import { LocalizationProvider } from 'src/locales/localization-provider';
 
 // ----------------------------------------------------------------------
 
@@ -28,11 +29,13 @@ export default function App({ children }: AppProps) {
           modeStorageKey={themeConfig.modeStorageKey}
           defaultMode={themeConfig.enableSystemMode ? 'system' : themeConfig.defaultMode}
         >
-          <MotionLazy>
-            <ProgressBar />
-            <SettingsDrawer defaultSettings={defaultSettings} />
-            {children}
-          </MotionLazy>
+          <LocalizationProvider>
+            <MotionLazy>
+              <ProgressBar />
+              <SettingsDrawer defaultSettings={defaultSettings} />
+              {children}
+            </MotionLazy>
+          </LocalizationProvider>
         </ThemeProvider>
       </SettingsProvider>
     </AuthProvider>

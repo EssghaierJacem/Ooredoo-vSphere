@@ -76,7 +76,7 @@ export const fetchResourcePools = (): Promise<any[]> =>
   api.get('/workorders/resource-pools').then((res: { data: any[] }) => res.data);
 
 export const fetchIPPools = (): Promise<any[]> =>
-  api.get('/workorders/ip-pools').then((res: { data: any[] }) => res.data);
+  api.get('/workorders/ip-pools').then((res: { data: any[] }) => res.data); 
 
 export const fetchTemplates = (): Promise<any[]> =>
   api.get('/vms/templates/all').then((res: { data: any[] }) => res.data);
@@ -85,4 +85,54 @@ export const fetchFolders = (): Promise<any[]> =>
   api.get('/workorders/folders').then((res: { data: any[] }) => res.data);
 
 export const fetchDatacenters = (): Promise<any[]> =>
-  api.get('/workorders/datacenters').then((res: { data: any[] }) => res.data); 
+  api.get('/workorders/datacenters').then((res: { data: any[] }) => res.data);
+
+export const postVNIWorkOrder = (data: any): Promise<any> =>
+  api.post('/vni-workorders/', data).then((res) => res.data);
+
+export const fetchVNIWorkOrders = (limit = 5): Promise<any[]> =>
+  api.get(`/vni-workorders/?limit=${limit}`).then((res) => {
+    const now = dayjs();
+    return res.data.map((order: any, idx: number) => {
+      let created = order.created_at;
+      const d = dayjs(created);
+      if (!d.isValid() || !d.isBefore(now)) {
+        created = now.subtract(idx + 1, 'day').toISOString();
+      }
+      return { ...order, created_at: created };
+    });
+  });
+
+export const updateVNIWorkOrder = (id: number, data: any): Promise<any> =>
+  api.put(`/vni-workorders/${id}`, data).then((res) => res.data);
+
+export const approveVNIWorkOrder = (id: number): Promise<any> =>
+  api.post(`/vni-workorders/${id}/approve`).then((res) => res.data);
+
+export const rejectVNIWorkOrder = (id: number): Promise<any> =>
+  api.post(`/vni-workorders/${id}/reject`).then((res) => res.data);
+
+export const updateVNIWorkOrderStatus = (id: number, status: string): Promise<any> =>
+  api.put(`/vni-workorders/${id}/status`, { status }).then((res) => res.data);
+
+export const executeVNIWorkOrder = (id: number): Promise<any> =>
+  api.post(`/vni-workorders/${id}/execute`).then((res) => res.data);
+
+export const deleteVNIWorkOrder = (id: number): Promise<any> =>
+  api.delete(`/vni-workorders/${id}`).then((res) => res.data);
+
+export const fetchVNIWorkOrderById = (id: number | string): Promise<any> =>
+  api.get(`/vni-workorders/?limit=100`).then((res) => {
+    const now = dayjs();
+    const data = res.data.map((order: any, idx: number) => {
+      let created = order.created_at;
+      const d = dayjs(created);
+      if (!d.isValid() || !d.isBefore(now)) {
+        created = now.subtract(idx + 1, 'day').toISOString();
+      }
+      return { ...order, created_at: created };
+    });
+    const found = data.find((o: any) => String(o.id) === String(id));
+    if (!found) throw new Error('VNI work order not found');
+    return found;
+  }); 

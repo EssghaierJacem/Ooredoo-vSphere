@@ -153,7 +153,7 @@ CREATE TABLE system_metrics (
 );
 ```
 
-### `networks` (optional)
+### `networks`
 
 ```sql
 CREATE TABLE networks (
@@ -164,6 +164,37 @@ CREATE TABLE networks (
     type VARCHAR,
     description TEXT,
     datacenter_name VARCHAR
+);
+```
+
+### `vni_workorders`
+
+```sql
+create table vni_workorders (
+   id                serial primary key,
+   owner             varchar not null,
+   requested_date    timestamp not null,
+   requested_by      varchar not null,
+   virtual_machines  jsonb,
+   deadline          timestamp not null,
+   project           varchar not null,
+   t0_gw             varchar not null,
+   t1_gw             varchar not null,
+   description       varchar not null,
+   vni_name          varchar not null,
+   cidr              varchar not null,
+   subnet_mask       varchar not null,
+   gateway           varchar not null,
+   first_ip          varchar not null,
+   last_ip           varchar not null,
+   number_of_ips     integer not null,
+   status            varchar default 'pending',
+   created_at        timestamp default current_timestamp,
+   updated_at        timestamp default current_timestamp,
+   last_execution_log text,
+   notes             text,
+   priority          varchar default 'normal',
+   assigned_to       varchar
 );
 ```
 

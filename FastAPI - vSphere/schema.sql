@@ -126,3 +126,31 @@ create table networks (
    description     text,
    datacenter_name varchar
 );
+
+-- 9. VNI Workorders Table
+create table vni_workorders (
+   id                serial primary key,
+   owner             varchar not null,
+   requested_date    timestamp not null,
+   requested_by      varchar not null,
+   virtual_machines  jsonb,
+   deadline          timestamp not null,
+   project           varchar not null,
+   t0_gw             varchar not null,
+   t1_gw             varchar not null,
+   description       varchar not null,
+   vni_name          varchar not null,
+   cidr              varchar not null,
+   subnet_mask       varchar not null,
+   gateway           varchar not null,
+   first_ip          varchar not null,
+   last_ip           varchar not null,
+   number_of_ips     integer not null,
+   status            varchar default 'pending',
+   created_at        timestamp default current_timestamp,
+   updated_at        timestamp default current_timestamp,
+   last_execution_log text,
+   notes             text,
+   priority          varchar default 'normal',
+   assigned_to       varchar
+);

@@ -82,18 +82,18 @@ function CarouselItem({ item, ...other }: CarouselItemProps) {
         </Button>
       </Box>
       {item.coverUrl && item.coverUrl.trim() !== '' ? (
-        <Image
-          alt={item.name}
-          src={item.coverUrl}
-          slotProps={{
-            overlay: {
-              sx: (theme) => ({
-                backgroundImage: `linear-gradient(to bottom, transparent 0%, ${theme.vars.palette.common.black} 75%)`,
-              }),
-            },
-          }}
+      <Image
+        alt={item.name}
+        src={item.coverUrl}
+        slotProps={{
+          overlay: {
+            sx: (theme) => ({
+              backgroundImage: `linear-gradient(to bottom, transparent 0%, ${theme.vars.palette.common.black} 75%)`,
+            }),
+          },
+        }}
           sx={{ width: 1, height: { xs: 288, xl: 320 }, objectFit: 'cover' }}
-        />
+      />
       ) : (
         <Box sx={{ width: 1, height: { xs: 288, xl: 320 }, bgcolor: 'common.black' }} />
       )}

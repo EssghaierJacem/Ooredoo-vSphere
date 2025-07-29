@@ -391,25 +391,25 @@ export default function WorkOrderEditPage() {
                 <FormControl fullWidth sx={{ mb: 2 }}>
                   <InputLabel>Host</InputLabel>
                   <Tooltip title="Select the ESXi host to place the VM on. Only hosts in the selected cluster are shown." placement="top" arrow>
-                    <Select
-                      label="Host"
-                      name="host_id"
-                      value={HOST_OPTIONS.includes(String(workOrder.host_id)) ? String(workOrder.host_id) : (HOST_OPTIONS[0] || '')}
-                      onChange={handleSelectChange}
-                    >
-                      {hosts.map((host) => (
+                  <Select
+                    label="Host"
+                    name="host_id"
+                    value={HOST_OPTIONS.includes(String(workOrder.host_id)) ? String(workOrder.host_id) : (HOST_OPTIONS[0] || '')}
+                    onChange={handleSelectChange}
+                  >
+                    {hosts.map((host) => (
                         <MenuItem key={host.id} value={String(host.id)}>
-                          {host.name} — RAM: {host.memory_free_gb?.toFixed(1) || '?'}GB free, CPU: {host.cpu_free_mhz?.toFixed(0) || '?'} MHz free, v{host.product_version || '?'}
-                        </MenuItem>
-                      ))}
-                    </Select>
+                        {host.name} — RAM: {host.memory_free_gb?.toFixed(1) || '?'}GB free, CPU: {host.cpu_free_mhz?.toFixed(0) || '?'} MHz free, v{host.product_version || '?'}
+                      </MenuItem>
+                    ))}
+                  </Select>
                   </Tooltip>
                 </FormControl>
                 <FormControl fullWidth sx={{ mb: 2 }}>
                   <InputLabel>VM Template</InputLabel>
                   <Tooltip title="Select the VM template to clone from. Only templates available in vCenter are shown. Leave blank to not use a template." placement="top" arrow>
-                    <Select
-                      label="VM Template"
+                  <Select
+                    label="VM Template"
                       name="template_id"
                       value={workOrder.template_id || ''}
                       onChange={handleSelectChange}
@@ -430,45 +430,45 @@ export default function WorkOrderEditPage() {
                       label="Folder"
                       name="folder_id"
                       value={workOrder.folder_id || (folders[0]?.id || '')}
-                      onChange={handleSelectChange}
-                    >
+                    onChange={handleSelectChange}
+                  >
                       {folders.map((folder) => (
                         <MenuItem key={folder.id} value={folder.id}>{folder.name}</MenuItem>
-                      ))}
-                    </Select>
+                    ))}
+                  </Select>
                   </Tooltip>
                 </FormControl>
                 <FormControl fullWidth sx={{ mb: 2 }}>
                   <InputLabel>Datastore</InputLabel>
                   <Tooltip title="Select the datastore for VM storage. Only datastores accessible from the selected host are shown." placement="top" arrow>
-                    <Select
-                      label="Datastore"
-                      name="datastore_id"
-                      value={DATASTORE_OPTIONS.includes(String(workOrder.datastore_id)) ? String(workOrder.datastore_id) : (DATASTORE_OPTIONS[0] || '')}
-                      onChange={handleSelectChange}
-                    >
+                  <Select
+                    label="Datastore"
+                    name="datastore_id"
+                    value={DATASTORE_OPTIONS.includes(String(workOrder.datastore_id)) ? String(workOrder.datastore_id) : (DATASTORE_OPTIONS[0] || '')}
+                    onChange={handleSelectChange}
+                  >
                       {filteredDatastores.map((ds) => (
                         <MenuItem key={ds.id} value={String(ds.id)}>{ds.name} ({ds.capacity_gb}GB)</MenuItem>
-                      ))}
-                    </Select>
+                    ))}
+                  </Select>
                   </Tooltip>
                 </FormControl>
                 <FormControl fullWidth sx={{ mb: 2 }}>
                   <InputLabel>Resource Pool</InputLabel>
                   <Tooltip title="Select the resource pool for the VM. Resource pools allow resource management within clusters." placement="top" arrow>
-                    <Select
-                      label="Resource Pool"
-                      name="resource_pool_id"
-                      value={workOrder.resource_pool_id || (resourcePools[0]?.id || '')}
-                      onChange={handleSelectChange}
-                      required
-                    >
-                      {resourcePools.map((pool) => (
-                        <MenuItem key={pool.id} value={pool.id}>
-                          {pool.name} {pool.parent ? `(${pool.parent}, ${pool.type})` : ''}
-                        </MenuItem>
-                      ))}
-                    </Select>
+                  <Select
+                    label="Resource Pool"
+                    name="resource_pool_id"
+                    value={workOrder.resource_pool_id || (resourcePools[0]?.id || '')}
+                    onChange={handleSelectChange}
+                    required
+                  >
+                    {resourcePools.map((pool) => (
+                      <MenuItem key={pool.id} value={pool.id}>
+                        {pool.name} {pool.parent ? `(${pool.parent}, ${pool.type})` : ''}
+                      </MenuItem>
+                    ))}
+                  </Select>
                   </Tooltip>
                 </FormControl>
               </Box>
