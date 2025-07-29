@@ -54,20 +54,7 @@ export const deleteWorkOrder = (id: number): Promise<any> =>
   api.delete(`/workorders/${id}`).then((res) => res.data);
 
 export const fetchWorkOrderById = (id: number | string): Promise<any> =>
-  api.get(`/workorders/?limit=100`).then((res) => {
-    const now = dayjs();
-    const data = res.data.map((order: any, idx: number) => {
-      let created = order.created_at;
-      const d = dayjs(created);
-      if (!d.isValid() || !d.isBefore(now)) {
-        created = now.subtract(idx + 1, 'day').toISOString();
-      }
-      return { ...order, created_at: created };
-    });
-    const found = data.find((o: any) => String(o.id) === String(id));
-    if (!found) throw new Error('Work order not found');
-    return found;
-  });
+  api.get(`/workorders/${id}`).then((res) => res.data);
 
 export const executeWorkOrder = (id: number): Promise<any> =>
   api.post(`/workorders/${id}/execute`).then((res) => res.data);
