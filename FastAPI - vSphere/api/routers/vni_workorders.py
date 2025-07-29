@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Path
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.database import get_db
@@ -6,6 +7,11 @@ from models.vni_workorder import VNIWorkOrder
 from services.vsphere.vni_operations import VNIOperations
 from datetime import datetime
 import json
+import os
+import tempfile
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
 
 router = APIRouter(
     prefix="/vni-workorders",
@@ -452,4 +458,144 @@ def get_vni_workorder_status(
         raise
     except Exception as e:
         print('GET VNI WORKORDER STATUS ERROR:', e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{vni_workorder_id}/export-excel")
+def export_vni_workorder_excel(
+    vni_workorder_id: int,
+    db: Session = Depends(get_db)
+):
+    """Export VNI workorder to Excel with Ooredoo styling"""
+    try:
+        vni_workorder = db.query(VNIWorkOrder).filter(VNIWorkOrder.id == vni_workorder_id).first()
+        if not vni_workorder:
+            raise HTTPException(status_code=404, detail="VNI workorder not found")
+        
+        # Create a new workbook and select the active sheet
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "VNI Configuration"
+        
+        # Define colors based on the image (red and white theme)
+        red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
+        white_fill = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
+        red_font = Font(color="FF0000", bold=True, size=14)
+        white_font = Font(color="FFFFFF", bold=True, size=12)
+        black_font = Font(color="000000", size=11)
+        bold_black_font = Font(color="000000", bold=True, size=11)
+        
+        # Define borders
+        thin_border = Border(
+            left=Side(style='thin'),
+            right=Side(style='thin'),
+            top=Side(style='thin'),
+            bottom=Side(style='thin')
+        )
+        
+        # Center alignment
+        center_alignment = Alignment(horizontal='center', vertical='center')
+        left_alignment = Alignment(horizontal='left', vertical='center')
+        
+        # Row 1: Ooredoo logo and header info
+        ws.merge_cells('A1:K1')
+        ooredoo_cell = ws['A1']
+        ooredoo_cell.value = "ooredoo"
+        ooredoo_cell.font = red_font
+        ooredoo_cell.alignment = left_alignment
+        
+        # Row 2-6: Information block (Owner, Requested Date, etc.)
+        info_labels = ["Owner:", "Requested Date:", "Requested By:", "Virtual Machines:", "Dead Line :"]
+        info_values = [
+            vni_workorder.owner,
+            vni_workorder.requested_date.strftime("%m/%d/%Y") if vni_workorder.requested_date else "",
+            vni_workorder.requested_by,
+            str(len(vni_workorder.virtual_machines)) if vni_workorder.virtual_machines else "0",
+            vni_workorder.deadline.strftime("%m/%d/%Y") if vni_workorder.deadline else ""
+        ]
+        
+        for i, (label, value) in enumerate(zip(info_labels, info_values)):
+            row = i + 2
+            # Label cell (red background, white text)
+            label_cell = ws[f'A{row}']
+            label_cell.value = label
+            label_cell.fill = red_fill
+            label_cell.font = white_font
+            label_cell.alignment = left_alignment
+            label_cell.border = thin_border
+            
+            # Value cell (white background, black text)
+            value_cell = ws[f'B{row}']
+            value_cell.value = value
+            value_cell.fill = white_fill
+            value_cell.font = black_font
+            value_cell.alignment = left_alignment
+            value_cell.border = thin_border
+        
+        # Row 7: Main title "Création VNI"
+        ws.merge_cells('A7:K7')
+        title_cell = ws['A7']
+        title_cell.value = "Création VNI"
+        title_cell.fill = red_fill
+        title_cell.font = white_font
+        title_cell.alignment = center_alignment
+        
+        # Row 8: Table headers
+        headers = ["Projet", "t0-gw", "t1-gw", "Description", "vni name", "CIDR", "Masque", "gateway", "first Ip", "last IP", "number"]
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=8, column=col)
+            cell.value = header
+            cell.fill = red_fill
+            cell.font = white_font
+            cell.alignment = center_alignment
+            cell.border = thin_border
+        
+        # Row 9: Data row
+        data_values = [
+            vni_workorder.project,
+            vni_workorder.t0_gw,
+            vni_workorder.t1_gw,
+            vni_workorder.description,
+            vni_workorder.vni_name,
+            vni_workorder.cidr,
+            vni_workorder.subnet_mask,
+            vni_workorder.gateway,
+            vni_workorder.first_ip,
+            vni_workorder.last_ip,
+            str(vni_workorder.number_of_ips)
+        ]
+        
+        for col, value in enumerate(data_values, 1):
+            cell = ws.cell(row=9, column=col)
+            cell.value = value
+            cell.fill = white_fill
+            cell.font = black_font
+            cell.alignment = center_alignment
+            cell.border = thin_border
+            
+            # Make gateway bold
+            if col == 8:  # gateway column
+                cell.font = bold_black_font
+        
+        # Set column widths
+        column_widths = [15, 12, 12, 15, 40, 15, 15, 15, 12, 12, 8]
+        for col, width in enumerate(column_widths, 1):
+            ws.column_dimensions[get_column_letter(col)].width = width
+        
+        # Create temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
+            wb.save(tmp_file.name)
+            tmp_file_path = tmp_file.name
+        
+        # Return the file
+        filename = f"VNI_Configuration_{vni_workorder.vni_name}_{vni_workorder.id}.xlsx"
+        return FileResponse(
+            path=tmp_file_path,
+            filename=filename,
+            media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            headers={'Content-Disposition': f'attachment; filename="{filename}"'}
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        print('EXPORT VNI WORKORDER EXCEL ERROR:', e)
         raise HTTPException(status_code=500, detail=str(e)) 

@@ -162,15 +162,24 @@ function VNIWorkOrderListView() {
     [tableData, table, dataInPage.length]
   );
 
-  const handleDeleteRows = useCallback(() => {
-    const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
-    setTableData(deleteRows);
+  const handleDeleteRows = useCallback(async () => {
+    try {
+      // Delete each selected workorder
+      for (const id of table.selected) {
+        await deleteVNIWorkOrder(parseInt(id));
+      }
+      
+      const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
+      setTableData(deleteRows);
 
-    table.onUpdatePageDeleteRows(tableData.length, dataInPage.length);
+      table.onUpdatePageDeleteRows(tableData.length, dataInPage.length);
 
-    toast.success('Delete success!');
-
-    confirmDialog.onFalse();
+      toast.success('Delete success!');
+      confirmDialog.onFalse();
+    } catch (error) {
+      console.error('Error deleting VNI workorders:', error);
+      toast.error('Failed to delete VNI workorders');
+    }
   }, [tableData, table, dataInPage.length, confirmDialog]);
 
   const handleEditRow = useCallback(

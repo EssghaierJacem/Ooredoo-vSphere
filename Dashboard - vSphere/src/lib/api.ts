@@ -135,4 +135,9 @@ export const fetchVNIWorkOrderById = (id: number | string): Promise<any> =>
     const found = data.find((o: any) => String(o.id) === String(id));
     if (!found) throw new Error('VNI work order not found');
     return found;
-  }); 
+  });
+
+export const exportVNIWorkOrderExcel = (id: number): Promise<Blob> =>
+  api.get(`/vni-workorders/${id}/export-excel`, {
+    responseType: 'blob',
+  }).then((res) => res.data); 

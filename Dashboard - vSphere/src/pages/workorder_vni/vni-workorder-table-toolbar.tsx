@@ -22,6 +22,7 @@ import { formHelperTextClasses } from '@mui/material/FormHelperText';
 
 import { Iconify } from 'src/components/iconify';
 import { CustomPopover } from 'src/components/custom-popover';
+import { toast } from 'src/components/snackbar';
 
 // ----------------------------------------------------------------------
 
@@ -82,17 +83,26 @@ export function VNIWorkOrderTableToolbar({ filters, options, dateError, onResetP
       slotProps={{ arrow: { placement: 'right-top' } }}
     >
       <MenuList>
-        <MenuItem onClick={() => menuActions.onClose()}>
+        <MenuItem onClick={() => {
+          menuActions.onClose();
+          toast.info('Print functionality coming soon');
+        }}>
           <Iconify icon="solar:printer-minimalistic-bold" />
           Print
         </MenuItem>
 
-        <MenuItem onClick={() => menuActions.onClose()}>
+        <MenuItem onClick={() => {
+          menuActions.onClose();
+          toast.info('Import functionality coming soon');
+        }}>
           <Iconify icon="solar:import-bold" />
           Import
         </MenuItem>
 
-        <MenuItem onClick={() => menuActions.onClose()}>
+        <MenuItem onClick={() => {
+          menuActions.onClose();
+          toast.info('Export functionality coming soon');
+        }}>
           <Iconify icon="solar:export-bold" />
           Export
         </MenuItem>
