@@ -122,20 +122,7 @@ export const deleteVNIWorkOrder = (id: number): Promise<any> =>
   api.delete(`/vni-workorders/${id}`).then((res) => res.data);
 
 export const fetchVNIWorkOrderById = (id: number | string): Promise<any> =>
-  api.get(`/vni-workorders/?limit=100`).then((res) => {
-    const now = dayjs();
-    const data = res.data.map((order: any, idx: number) => {
-      let created = order.created_at;
-      const d = dayjs(created);
-      if (!d.isValid() || !d.isBefore(now)) {
-        created = now.subtract(idx + 1, 'day').toISOString();
-      }
-      return { ...order, created_at: created };
-    });
-    const found = data.find((o: any) => String(o.id) === String(id));
-    if (!found) throw new Error('VNI work order not found');
-    return found;
-  });
+  api.get(`/vni-workorders/${id}`).then((res) => res.data);
 
 export const exportVNIWorkOrderExcel = (id: number): Promise<Blob> =>
   api.get(`/vni-workorders/${id}/export-excel`, {
