@@ -16,6 +16,7 @@ import IconButton from '@mui/material/IconButton';
 import ListItemText from '@mui/material/ListItemText';
 
 import { RouterLink } from 'src/routes/components';
+import { paths } from 'src/routes/paths';
 
 import { fDate, fTime } from 'src/utils/format-time';
 
@@ -58,6 +59,13 @@ export function VNIWorkOrderTableRow({
           <MenuItem component={RouterLink} href={detailsHref} onClick={menuActions.onClose}>
             <Iconify icon="solar:eye-bold" />
             View
+          </MenuItem>
+        </li>
+
+        <li>
+          <MenuItem component={RouterLink} href={paths.dashboard.workorder_vni.detailed} onClick={menuActions.onClose}>
+            <Iconify icon="solar:list-bold" />
+            View All Details
           </MenuItem>
         </li>
 

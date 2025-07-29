@@ -278,14 +278,24 @@ function VNIWorkOrderListView() {
           { name: 'VNI Work Orders' },
         ]}
         action={
-          <Button
-            component={RouterLink}
-            href={paths.dashboard.workorder_vni.request}
-            variant="contained"
-            startIcon={<Iconify icon="mingcute:add-line" />}
-          >
-            New VNI Work Order
-          </Button>
+          <Stack direction="row" spacing={2}>
+            <Button
+              component={RouterLink}
+              href={paths.dashboard.workorder_vni.detailed}
+              variant="outlined"
+              startIcon={<Iconify icon="solar:list-bold" />}
+            >
+              Detailed View
+            </Button>
+            <Button
+              component={RouterLink}
+              href={paths.dashboard.workorder_vni.request}
+              variant="contained"
+              startIcon={<Iconify icon="mingcute:add-line" />}
+            >
+              New VNI Work Order
+            </Button>
+          </Stack>
         }
         sx={{
           mb: { xs: 3, md: 5 },
