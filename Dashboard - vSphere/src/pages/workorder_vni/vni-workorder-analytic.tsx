@@ -1,12 +1,10 @@
 import type { IconifyName } from 'src/components/iconify';
 
-import { varAlpha } from 'minimal-shared/utils';
-
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { fCurrency, fShortenNumber } from 'src/utils/format-number';
+import { fShortenNumber } from 'src/utils/format-number';
 
 import { Iconify } from 'src/components/iconify';
 
@@ -15,13 +13,12 @@ import { Iconify } from 'src/components/iconify';
 type Props = {
   title: string;
   total: number;
-  price: number;
   color?: string;
   percent: number;
   icon: IconifyName;
 };
 
-export function InvoiceAnalytic({ title, total, icon, color, percent, price }: Props) {
+export function VNIWorkOrderAnalytic({ title, total, icon, color, percent }: Props) {
   return (
     <Box
       sx={{
@@ -56,15 +53,13 @@ export function InvoiceAnalytic({ title, total, icon, color, percent, price }: P
           value={100}
           thickness={3}
           variant="determinate"
-          sx={[
-            (theme) => ({
-              top: 0,
-              left: 0,
-              opacity: 0.48,
-              position: 'absolute',
-              color: varAlpha(theme.vars.palette.grey['500Channel'], 0.16),
-            }),
-          ]}
+          sx={{
+            top: 0,
+            left: 0,
+            opacity: 0.48,
+            position: 'absolute',
+            color: 'rgba(145, 158, 171, 0.16)',
+          }}
         />
       </Box>
 
@@ -75,13 +70,11 @@ export function InvoiceAnalytic({ title, total, icon, color, percent, price }: P
           component="span"
           sx={{ my: 0.5, display: 'block', typography: 'body2', color: 'text.disabled' }}
         >
-          {fShortenNumber(total)} invoices
+          {fShortenNumber(total)} workorders
         </Box>
 
-        <Box component="span" sx={{ typography: 'subtitle2' }}>
-          {fCurrency(price)}
-        </Box>
+
       </div>
     </Box>
   );
-}
+} 

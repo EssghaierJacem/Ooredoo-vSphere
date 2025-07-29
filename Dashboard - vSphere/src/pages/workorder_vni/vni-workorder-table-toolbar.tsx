@@ -1,5 +1,5 @@
 import type { IDatePickerControl } from 'src/types/common';
-import type { IInvoiceTableFilters } from 'src/types/invoice';
+import type { IVNIWorkOrderTableFilters } from 'src/types/vni-workorder';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import type { UseSetStateReturn } from 'minimal-shared/hooks';
 
@@ -28,32 +28,32 @@ import { CustomPopover } from 'src/components/custom-popover';
 type Props = {
   dateError: boolean;
   onResetPage: () => void;
-  filters: UseSetStateReturn<IInvoiceTableFilters>;
+  filters: UseSetStateReturn<IVNIWorkOrderTableFilters>;
   options: {
-    services: string[];
+    projects: string[];
   };
 };
 
-export function InvoiceTableToolbar({ filters, options, dateError, onResetPage }: Props) {
+export function VNIWorkOrderTableToolbar({ filters, options, dateError, onResetPage }: Props) {
   const menuActions = usePopover();
 
   const { state: currentFilters, setState: updateFilters } = filters;
 
-  const handleFilterName = useCallback(
+  const handleFilterOwner = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       onResetPage();
-      updateFilters({ name: event.target.value });
+      updateFilters({ owner: event.target.value });
     },
     [onResetPage, updateFilters]
   );
 
-  const handleFilterService = useCallback(
+  const handleFilterProject = useCallback(
     (event: SelectChangeEvent<string[]>) => {
       const newValue =
         typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value;
 
       onResetPage();
-      updateFilters({ service: newValue });
+      updateFilters({ project: newValue });
     },
     [onResetPage, updateFilters]
   );
@@ -113,22 +113,22 @@ export function InvoiceTableToolbar({ filters, options, dateError, onResetPage }
         }}
       >
         <FormControl sx={{ flexShrink: 0, width: { xs: 1, md: 180 } }}>
-          <InputLabel htmlFor="filter-service-select">Service</InputLabel>
+          <InputLabel htmlFor="filter-project-select">Project</InputLabel>
           <Select
             multiple
-            value={currentFilters.service}
-            onChange={handleFilterService}
-            input={<OutlinedInput label="Service" />}
+            value={currentFilters.project}
+            onChange={handleFilterProject}
+            input={<OutlinedInput label="Project" />}
             renderValue={(selected) => selected.map((value) => value).join(', ')}
-            inputProps={{ id: 'filter-service-select' }}
+            inputProps={{ id: 'filter-project-select' }}
             sx={{ textTransform: 'capitalize' }}
           >
-            {options.services.map((option) => (
+            {options.projects.map((option) => (
               <MenuItem key={option} value={option}>
                 <Checkbox
                   disableRipple
                   size="small"
-                  checked={currentFilters.service.includes(option)}
+                  checked={currentFilters.project.includes(option)}
                   slotProps={{
                     input: {
                       id: `${option}-checkbox`,
@@ -144,7 +144,7 @@ export function InvoiceTableToolbar({ filters, options, dateError, onResetPage }
 
         <DatePicker
           label="Start date"
-          value={currentFilters.endDate}
+          value={currentFilters.startDate}
           onChange={handleFilterStartDate}
           slotProps={{ textField: { fullWidth: true } }}
           sx={{ maxWidth: { md: 180 } }}
@@ -181,9 +181,9 @@ export function InvoiceTableToolbar({ filters, options, dateError, onResetPage }
         >
           <TextField
             fullWidth
-            value={currentFilters.name}
-            onChange={handleFilterName}
-            placeholder="Search customer or invoice number..."
+            value={currentFilters.owner}
+            onChange={handleFilterOwner}
+            placeholder="Search owner or workorder..."
             slotProps={{
               input: {
                 startAdornment: (
@@ -204,4 +204,4 @@ export function InvoiceTableToolbar({ filters, options, dateError, onResetPage }
       {renderMenuActions()}
     </>
   );
-}
+} 

@@ -1,4 +1,4 @@
-import type { IInvoice } from 'src/types/invoice';
+import type { IVNIWorkOrder } from 'src/types/vni-workorder';
 
 import { useBoolean, usePopover } from 'minimal-shared/hooks';
 
@@ -17,7 +17,6 @@ import ListItemText from '@mui/material/ListItemText';
 
 import { RouterLink } from 'src/routes/components';
 
-import { fCurrency } from 'src/utils/format-number';
 import { fDate, fTime } from 'src/utils/format-time';
 
 import { Label } from 'src/components/label';
@@ -28,7 +27,7 @@ import { CustomPopover } from 'src/components/custom-popover';
 // ----------------------------------------------------------------------
 
 type Props = {
-  row: IInvoice;
+  row: IVNIWorkOrder;
   selected: boolean;
   editHref: string;
   detailsHref: string;
@@ -36,7 +35,7 @@ type Props = {
   onDeleteRow: () => void;
 };
 
-export function InvoiceTableRow({
+export function VNIWorkOrderTableRow({
   row,
   selected,
   editHref,
@@ -99,84 +98,81 @@ export function InvoiceTableRow({
     />
   );
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'warning';
+      case 'approved':
+        return 'success';
+      case 'rejected':
+        return 'error';
+      case 'draft':
+        return 'default';
+      case 'executing':
+        return 'info';
+      case 'completed':
+        return 'success';
+      case 'failed':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'low':
+        return 'success';
+      case 'normal':
+        return 'default';
+      case 'high':
+        return 'warning';
+      case 'critical':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
+
   return (
     <>
       <TableRow hover selected={selected}>
         <TableCell padding="checkbox">
-          <Checkbox
-            checked={selected}
-            onClick={onSelectRow}
-            slotProps={{
-              input: {
-                id: `${row.id}-checkbox`,
-                'aria-label': `${row.id} checkbox`,
-              },
-            }}
-          />
+          <Checkbox disableRipple size="small" checked={selected} onChange={onSelectRow} />
         </TableCell>
 
         <TableCell>
-          <Box sx={{ gap: 2, display: 'flex', alignItems: 'center' }}>
-            <Avatar alt={row.invoiceTo.name}>{row.invoiceTo.name.charAt(0).toUpperCase()}</Avatar>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Avatar alt={row.owner} sx={{ mr: 2 }}>
+              {row.owner.charAt(0).toUpperCase()}
+            </Avatar>
 
             <ListItemText
-              primary={row.invoiceTo.name}
-              secondary={
-                <Link component={RouterLink} href={detailsHref} color="inherit">
-                  {row.invoiceNumber}
-                </Link>
-              }
-              slotProps={{
-                primary: { noWrap: true, sx: { typography: 'body2' } },
-                secondary: {
-                  sx: { color: 'text.disabled', '&:hover': { color: 'text.secondary' } },
-                },
-              }}
+              primary={row.owner}
+              secondary={row.requested_by}
+              primaryTypographyProps={{ typography: 'body2' }}
+              secondaryTypographyProps={{ component: 'span', color: 'text.disabled' }}
             />
           </Box>
         </TableCell>
 
+        <TableCell>{fDate(row.requested_date)}</TableCell>
+
+        <TableCell>{fDate(row.deadline)}</TableCell>
+
         <TableCell>
-          <ListItemText
-            primary={fDate(row.createDate)}
-            secondary={fTime(row.createDate)}
-            slotProps={{
-              primary: { noWrap: true, sx: { typography: 'body2' } },
-              secondary: { sx: { mt: 0.5, typography: 'caption' } },
-            }}
-          />
+          <Label variant="soft" color={getPriorityColor(row.priority)}>
+            {row.priority}
+          </Label>
         </TableCell>
 
-        <TableCell>
-          <ListItemText
-            primary={fDate(row.dueDate)}
-            secondary={fTime(row.dueDate)}
-            slotProps={{
-              primary: { noWrap: true, sx: { typography: 'body2' } },
-              secondary: { sx: { mt: 0.5, typography: 'caption' } },
-            }}
-          />
-        </TableCell>
-
-        <TableCell>{fCurrency(row.totalAmount)}</TableCell>
-
-        <TableCell align="center">{row.sent}</TableCell>
-
-        <TableCell>
-          <Label
-            variant="soft"
-            color={
-              (row.status === 'paid' && 'success') ||
-              (row.status === 'pending' && 'warning') ||
-              (row.status === 'overdue' && 'error') ||
-              'default'
-            }
-          >
+        <TableCell align="center">
+          <Label variant="soft" color={getStatusColor(row.status)}>
             {row.status}
           </Label>
         </TableCell>
 
-        <TableCell align="right" sx={{ px: 1 }}>
+        <TableCell align="right">
           <IconButton color={menuActions.open ? 'inherit' : 'default'} onClick={menuActions.onOpen}>
             <Iconify icon="eva:more-vertical-fill" />
           </IconButton>
@@ -187,4 +183,4 @@ export function InvoiceTableRow({
       {renderConfirmDialog()}
     </>
   );
-}
+} 
