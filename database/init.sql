@@ -1,3 +1,0 @@
--- Database initialization script
--- This script runs when the PostgreSQL container starts for the first time
--- The schema.sql file will handle table creation 
