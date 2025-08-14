@@ -4,8 +4,12 @@ import { varAlpha } from 'minimal-shared/utils';
 
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 
 import { CONFIG } from 'src/global-config';
+import { useRouter } from 'src/routes/hooks';
+import { paths } from 'src/routes/paths';
+import { MotivationIllustration } from 'src/assets/illustrations';
 
 // ----------------------------------------------------------------------
 
@@ -17,6 +21,8 @@ type Props = BoxProps & {
 };
 
 export function EcommerceWelcome({ title, description, action, img, sx, ...other }: Props) {
+  const router = useRouter();
+
   return (
     <Box
       sx={[
@@ -57,14 +63,13 @@ export function EcommerceWelcome({ title, description, action, img, sx, ...other
         <Typography variant="h4" sx={{ whiteSpace: 'pre-line', mb: 1 }}>
           {title}
         </Typography>
-
-        <Typography variant="body2" sx={{ opacity: 0.64, maxWidth: 360, ...(action && { mb: 3 }) }}>
-          {description}
+        <Typography variant="body2" sx={{ opacity: 0.64, maxWidth: 360, mb: 3 }}>
+          Self-Service vSphere VM Provisioning Portal. Easily request, track, and manage your virtual machine work orders.
         </Typography>
-
-        {action && action}
+        <Button variant="contained" color="primary" onClick={() => router.push(paths.dashboard.workorder.request)}>
+          Request a VM
+        </Button>
       </Box>
-
       {img && <Box sx={{ maxWidth: 260 }}>{img}</Box>}
     </Box>
   );

@@ -36,3 +36,17 @@ GET http://localhost:8000/history/data/datastore
 GET http://localhost:8000/history/data/vm
 GET http://localhost:8000/history/metrics
 GET http://localhost:8000/history/metrics/summary
+
+
+### VNI Workorder 
+GET http://localhost:8000/vni-workorders/
+GET http://localhost:8000/vni-workorders/?status=pending
+GET http://localhost:8000/vni-workorders/1
+GET http://localhost:8000/vni-workorders/1/status
+GET http://localhost:8000/vni-workorders/1/log
+POST http://localhost:8000/vni-workorders/
+POST http://localhost:8000/vni-workorders/
+POST http://localhost:8000/vni-workorders/1/approve
+POST http://localhost:8000/vni-workorders/1/execute
+PUT http://localhost:8000/vni-workorders/1
+DELETE http://localhost:8000/vni-workorders/1 

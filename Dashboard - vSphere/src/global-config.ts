@@ -9,6 +9,7 @@ export type ConfigValue = {
   appVersion: string;
   serverUrl: string;
   assetsDir: string;
+  vsphereUrl: string;
   auth: {
     method: 'jwt' | 'amplify' | 'firebase' | 'supabase' | 'auth0';
     skip: boolean;
@@ -36,6 +37,7 @@ export const CONFIG: ConfigValue = {
   appVersion: packageJson.version,
   serverUrl: process.env.REACT_APP_SERVER_URL ?? '',
   assetsDir: process.env.REACT_APP_ASSETS_DIR ?? '',
+  vsphereUrl: process.env.REACT_APP_VSPHERE_URL ?? 'https://172.19.3.36',
   /**
    * Auth
    * @method jwt | amplify | firebase | supabase | auth0

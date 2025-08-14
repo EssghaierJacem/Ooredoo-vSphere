@@ -1,6 +1,7 @@
 import { useBoolean } from 'minimal-shared/hooks';
 import { useRef, useEffect, useCallback } from 'react';
 import { isActiveLink, isExternalLink } from 'minimal-shared/utils';
+import { matchPath } from 'react-router';
 
 import { usePathname } from 'src/routes/hooks';
 
@@ -23,7 +24,17 @@ export function NavList({
   const pathname = usePathname();
   const navItemRef = useRef<HTMLButtonElement>(null);
 
-  const isActive = isActiveLink(pathname, data.path, !!data.children);
+  let isActive = isActiveLink(pathname, data.path, !!data.children);
+  if (!isActive && Array.isArray(data.match)) {
+    isActive = data.match.some((pattern) => {
+      // If pattern ends with *, do prefix match
+      if (pattern.endsWith('/*')) {
+        return pathname.startsWith(pattern.slice(0, -1));
+      }
+      // Exact match
+      return pathname === pattern;
+    });
+  }
 
   const { value: open, onFalse: onClose, onToggle } = useBoolean(isActive);
 

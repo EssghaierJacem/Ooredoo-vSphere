@@ -43,12 +43,26 @@ export const paths = {
   // DASHBOARD
   dashboard: {
     root: ROOTS.DASHBOARD,
-    two: `${ROOTS.DASHBOARD}/two`,
-    three: `${ROOTS.DASHBOARD}/three`,
+    two: `${ROOTS.DASHBOARD}/workorders_vm`,
+    three: `${ROOTS.DASHBOARD}/vms`,
     group: {
-      root: `${ROOTS.DASHBOARD}/group`,
-      five: `${ROOTS.DASHBOARD}/group/five`,
-      six: `${ROOTS.DASHBOARD}/group/six`,
+      root: `${ROOTS.DASHBOARD}/deployments`,
+      five: `${ROOTS.DASHBOARD}/deployments/ansible`,
+      six: `${ROOTS.DASHBOARD}/deployments/ci_cd`,
+    },
+    workorder: {
+      list: `${ROOTS.DASHBOARD}/workorders_vm`,
+      detail: (id: string | number) => `${ROOTS.DASHBOARD}/workorder/${id}`,
+      edit: (id: string | number) => `${ROOTS.DASHBOARD}/workorder/${id}/edit`,
+      request: `${ROOTS.DASHBOARD}/workorder/request`,
+      detailed: `${ROOTS.DASHBOARD}/workorder/detailed`,
+    },
+    workorder_vni: {
+      list: `${ROOTS.DASHBOARD}/workorder_vni`,
+      detail: (id: string | number) => `${ROOTS.DASHBOARD}/workorder_vni/${id}`,
+      edit: (id: string | number) => `${ROOTS.DASHBOARD}/workorder_vni/${id}/edit`,
+      request: `${ROOTS.DASHBOARD}/workorder_vni/request`,
+      detailed: `${ROOTS.DASHBOARD}/workorder_vni/detailed`,
     },
   },
 };

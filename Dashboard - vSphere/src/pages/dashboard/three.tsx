@@ -4,7 +4,7 @@ import { OverviewAnalyticsView } from 'src/sections/overview/analytics/view';
 
 // ----------------------------------------------------------------------
 
-const metadata = { title: `Analytics | Dashboard - ${CONFIG.appName}` };
+const metadata = { title: `VMs | Dashboard - ${CONFIG.appName}` };
 
 export default function Page() {
   return (

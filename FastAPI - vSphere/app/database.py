@@ -3,6 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
 from app.config import settings
+from models.workorder import WorkOrder
 
 # Create database engine
 engine = create_engine(settings.get_database_url())

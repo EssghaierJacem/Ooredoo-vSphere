@@ -3,13 +3,15 @@ import type { NavItemProps, NavSectionProps } from 'src/components/nav-section';
 
 import { merge } from 'es-toolkit';
 import { useBoolean } from 'minimal-shared/hooks';
+import { useEffect, useState, useRef } from 'react';
+import { fetchWorkOrders } from 'src/lib/api';
 
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import { useTheme } from '@mui/material/styles';
 import { iconButtonClasses } from '@mui/material/IconButton';
 
-import { _contacts, _notifications } from 'src/_mock';
+import { _contacts } from 'src/_mock';
 
 import { Logo } from 'src/components/logo';
 import { useSettingsContext } from 'src/components/settings';
@@ -36,6 +38,7 @@ import { WorkspacesPopover } from '../components/workspaces-popover';
 import { navData as dashboardNavData } from '../nav-config-dashboard';
 import { dashboardLayoutVars, dashboardNavColorVars } from './css-vars';
 import { NotificationsDrawer } from '../components/notifications-drawer';
+import { WorkOrderTableRow } from 'src/sections/overview/e-commerce/view/overview-ecommerce-view';
 
 import type { MainSectionProps } from '../core/main-section';
 import type { HeaderSectionProps } from '../core/header-section';
@@ -55,6 +58,23 @@ export type DashboardLayoutProps = LayoutBaseProps & {
     main?: MainSectionProps;
   };
 };
+
+type Notification = ReturnType<typeof mapWorkOrderToNotification>;
+
+function mapWorkOrderToNotification(order: WorkOrderTableRow & { created_at?: string }) {
+  const dateStr = order.created_at || (order as any).createdAt;
+  const date = new Date(dateStr);
+  return {
+    id: String(order.id),
+    type: 'order',
+    title: `<p>Work order for <strong>${order.name}</strong> created, requires <strong>${order.ram}GB RAM</strong>, <strong>${order.cpu} CPU</strong>, <strong>${order.disk}GB disk</strong>, OS: <strong>${order.os}</strong></p>`,
+    category: 'Work Order',
+    isUnRead: order.status === 'pending',
+    avatarUrl: null,
+    createdAt: isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString(),
+    status: order.status, 
+  };
+}
 
 export function DashboardLayout({
   sx,
@@ -81,6 +101,42 @@ export function DashboardLayout({
 
   const canDisplayItemByRole = (allowedRoles: NavItemProps['allowedRoles']): boolean =>
     !allowedRoles?.includes(user?.role);
+
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [seen, setSeen] = useState<Record<string, boolean>>(() => {
+    try {
+      const stored = localStorage.getItem('notifications_seen');
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
+  const pollingRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem('notifications_seen', JSON.stringify(seen));
+  }, [seen]);
+
+  const fetchNotifications = async () => {
+    const data = await fetchWorkOrders(100); 
+    setNotifications(data.map(mapWorkOrderToNotification));
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    pollingRef.current = window.setInterval(fetchNotifications, 10000);
+    return () => {
+      if (pollingRef.current !== null) clearInterval(pollingRef.current);
+    };
+  }, []);
+
+  const handleToggleSeen = (id: string) => setSeen((prev) => ({ ...prev, [id]: !prev[id] }));
+  const handleClearAll = () => setSeen(Object.fromEntries(notifications.map((n) => [n.id, true])));
+
+  // Tabs logic
+  const allNotifications = notifications;
+  const unreadNotifications = notifications.filter((n) => n.isUnRead && !seen[n.id]);
+  const archivedNotifications = notifications.filter((n) => ['done', 'completed', 'archived'].includes((n.status || '').toLowerCase()));
 
   const renderHeader = () => {
     const headerSlotProps: HeaderSectionProps['slotProps'] = {
@@ -165,7 +221,16 @@ export function DashboardLayout({
           />
 
           {/** @slot Notifications popover */}
-          <NotificationsDrawer data={_notifications} />
+          <NotificationsDrawer
+            data={allNotifications.map((n) => ({ ...n, isUnRead: n.isUnRead && !seen[n.id] }))}
+            onSeen={handleToggleSeen}
+            onClearAll={handleClearAll}
+            tabData={{
+              all: allNotifications.map((n) => ({ ...n, isUnRead: n.isUnRead && !seen[n.id] })),
+              unread: unreadNotifications.map((n) => ({ ...n, isUnRead: n.isUnRead && !seen[n.id] })),
+              archived: archivedNotifications.map((n) => ({ ...n, isUnRead: n.isUnRead && !seen[n.id] })),
+            }}
+          />
 
           {/** @slot Contacts popover */}
           <ContactsPopover data={_contacts} />
