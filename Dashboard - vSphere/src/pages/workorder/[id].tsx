@@ -36,17 +36,25 @@ export default function WorkOrderDetailPage() {
   useEffect(() => {
     if (id !== undefined) {
       setLoading(true);
+      setError(null);
       Promise.all([
         fetchWorkOrderById(id),
         fetchHosts(),
         fetchDatastores(),
       ])
         .then(([wo, hosts, datastores]) => {
-          setWorkOrder(wo);
-          setHosts(hosts);
-          setDatastores(datastores);
+          if (!wo) {
+            setError('Work order not found');
+          } else {
+            setWorkOrder(wo);
+            setHosts(hosts);
+            setDatastores(datastores);
+          }
         })
-        .catch((e) => setError(e.message))
+        .catch((e) => {
+          console.error('Error fetching work order:', e);
+          setError(e.message || 'Failed to load work order');
+        })
         .finally(() => setLoading(false));
     } else {
       setError('Invalid work order ID');
@@ -89,7 +97,7 @@ export default function WorkOrderDetailPage() {
       await deleteWorkOrder(Number(workOrder.id));
       setSnackbar({ open: true, message: 'Work order deleted!', color: 'success' });
       setOpenDelete(false);
-      setTimeout(() => router.push(paths.dashboard.two), 1000);
+      setTimeout(() => router.push(paths.dashboard.workorder.list), 1000);
     } catch (e) {
       setSnackbar({ open: true, message: 'Failed to delete work order', color: 'error' });
     } finally {

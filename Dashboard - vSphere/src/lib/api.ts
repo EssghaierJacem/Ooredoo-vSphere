@@ -54,7 +54,12 @@ export const deleteWorkOrder = (id: number): Promise<any> =>
   api.delete(`/workorders/${id}`).then((res) => res.data);
 
 export const fetchWorkOrderById = (id: number | string): Promise<any> =>
-  api.get(`/workorders/?id=${id}`).then((res) => res.data[0]);
+  api.get(`/workorders/?id=${id}`).then((res) => {
+    if (!res.data || res.data.length === 0) {
+      throw new Error('Work order not found');
+    }
+    return res.data[0];
+  });
 
 export const executeWorkOrder = (id: number): Promise<any> =>
   api.post(`/workorders/${id}/execute/`).then((res) => res.data);

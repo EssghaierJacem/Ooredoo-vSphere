@@ -57,7 +57,17 @@ export const navData: NavSectionProps['data'] = [
         icon: ICONS.dashboard,
         info: <Label>v{CONFIG.appVersion}</Label>,
       },
-      { title: 'Work Orders', path: paths.dashboard.two, icon: ICONS.ecommerce, match: ['/dashboard/workorders_vm', '/dashboard/workorder', '/dashboard/workorder/*'] },
+      { 
+        title: 'Work Orders', 
+        path: paths.dashboard.two, 
+        icon: ICONS.ecommerce, 
+        match: ['/dashboard/workorders_vm', '/dashboard/workorder', '/dashboard/workorder/*'],
+        children: [
+          { title: 'List', path: paths.dashboard.two },
+          { title: 'Full Table', path: paths.dashboard.workorder.detailed },
+          { title: 'Request', path: paths.dashboard.workorder.request },
+        ],
+      },
       { 
         title: 'VNI', 
         path: paths.dashboard.workorder_vni.list, 

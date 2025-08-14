@@ -51,9 +51,11 @@ export const paths = {
       six: `${ROOTS.DASHBOARD}/deployments/ci_cd`,
     },
     workorder: {
+      list: `${ROOTS.DASHBOARD}/workorders_vm`,
       detail: (id: string | number) => `${ROOTS.DASHBOARD}/workorder/${id}`,
       edit: (id: string | number) => `${ROOTS.DASHBOARD}/workorder/${id}/edit`,
       request: `${ROOTS.DASHBOARD}/workorder/request`,
+      detailed: `${ROOTS.DASHBOARD}/workorder/detailed`,
     },
     workorder_vni: {
       list: `${ROOTS.DASHBOARD}/workorder_vni`,
