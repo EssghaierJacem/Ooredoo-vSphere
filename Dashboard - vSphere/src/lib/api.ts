@@ -45,16 +45,16 @@ export const fetchWorkOrders = (limit = 5): Promise<any[]> =>
   });
 
 export const updateWorkOrder = (id: number, data: any): Promise<any> =>
-  api.put(`/workorders/${id}/`, data).then((res) => res.data);
+  api.put(`/workorders/${id}`, data).then((res) => res.data);
 
 export const approveWorkOrder = (id: number): Promise<any> =>
   api.post(`/workorders/${id}/approve/`).then((res) => res.data);
 
 export const deleteWorkOrder = (id: number): Promise<any> =>
-  api.delete(`/workorders/${id}/`).then((res) => res.data);
+  api.delete(`/workorders/${id}`).then((res) => res.data);
 
 export const fetchWorkOrderById = (id: number | string): Promise<any> =>
-  api.get(`/workorders/${id}/`).then((res) => res.data);
+  api.get(`/workorders/?id=${id}`).then((res) => res.data[0]);
 
 export const executeWorkOrder = (id: number): Promise<any> =>
   api.post(`/workorders/${id}/execute/`).then((res) => res.data);
@@ -91,7 +91,7 @@ export const fetchVNIWorkOrders = (limit = 5): Promise<any[]> =>
   });
 
 export const updateVNIWorkOrder = (id: number, data: any): Promise<any> =>
-  api.put(`/vni-workorders/${id}/`, data).then((res) => res.data);
+  api.put(`/vni-workorders/${id}`, data).then((res) => res.data);
 
 export const approveVNIWorkOrder = (id: number): Promise<any> =>
   api.post(`/vni-workorders/${id}/approve/`).then((res) => res.data);
@@ -106,10 +106,10 @@ export const executeVNIWorkOrder = (id: number): Promise<any> =>
   api.post(`/vni-workorders/${id}/execute/`).then((res) => res.data);
 
 export const deleteVNIWorkOrder = (id: number): Promise<any> =>
-  api.delete(`/vni-workorders/${id}/`).then((res) => res.data);
+  api.delete(`/vni-workorders/${id}`).then((res) => res.data);
 
 export const fetchVNIWorkOrderById = (id: number | string): Promise<any> =>
-  api.get(`/vni-workorders/${id}/`).then((res) => res.data);
+  api.get(`/vni-workorders/${id}`).then((res) => res.data);
 
 export const exportVNIWorkOrderExcel = (id: number): Promise<Blob> =>
   api.get(`/vni-workorders/${id}/export-excel/`, {

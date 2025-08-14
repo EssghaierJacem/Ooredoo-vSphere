@@ -288,6 +288,39 @@ export function StepTwo() {
     setNetworkValidation(validation);
   }, [gateway, firstIp, lastIp, cidr]);
 
+  useEffect(() => {
+    const isValidIp = (ip: string) => {
+      const parts = ip.split('.').map(Number);
+      return parts.length === 4 && parts.every((p) => Number.isInteger(p) && p >= 0 && p <= 255);
+    };
+
+    const makeMaskNumber = (prefix: number) => (prefix === 0 ? 0 : (0xffffffff << (32 - prefix)) >>> 0);
+
+    const maskToDotted = (maskNum: number) =>
+      [24, 16, 8, 0]
+        .map((shift) => ((maskNum >>> shift) & 0xff).toString())
+        .join('.');
+
+    const cidrStr = (cidr || '').trim();
+    if (!cidrStr) return;
+
+    const cidrMatch = cidrStr.match(/^(\d{1,3}(?:\.\d{1,3}){3})\s*\/\s*(\d{1,2})$/);
+    if (!cidrMatch) return;
+
+    const [, ipAddress, prefixStr] = cidrMatch;
+    const prefix = parseInt(prefixStr, 10);
+
+    if (!isValidIp(ipAddress) || isNaN(prefix) || prefix < 0 || prefix > 32) return;
+
+    try {
+      const maskNum = makeMaskNumber(prefix);
+      const maskDotted = maskToDotted(maskNum);
+      setValue('vni_config.subnet_mask', maskDotted, { shouldDirty: true, shouldValidate: true });
+    } catch {
+      // ignore parse errors
+    }
+  }, [cidr, setValue]);
+
   return (
     <>
       <Field.Text

@@ -43,12 +43,12 @@ export const paths = {
   // DASHBOARD
   dashboard: {
     root: ROOTS.DASHBOARD,
-    two: `${ROOTS.DASHBOARD}/two`,
+    two: `${ROOTS.DASHBOARD}/workorders_vm`,
     three: `${ROOTS.DASHBOARD}/vms`,
     group: {
-      root: `${ROOTS.DASHBOARD}/group`,
-      five: `${ROOTS.DASHBOARD}/group/five`,
-      six: `${ROOTS.DASHBOARD}/group/six`,
+      root: `${ROOTS.DASHBOARD}/deployments`,
+      five: `${ROOTS.DASHBOARD}/deployments/ansible`,
+      six: `${ROOTS.DASHBOARD}/deployments/ci_cd`,
     },
     workorder: {
       detail: (id: string | number) => `${ROOTS.DASHBOARD}/workorder/${id}`,

@@ -66,7 +66,7 @@ export function NavUpgrade({ sx, ...other }: BoxProps) {
           </Typography>
         </Box>
 
-        <Button variant="contained" href={paths.minimalStore} target="_blank" rel="noopener">
+        <Button variant="contained" href={CONFIG.vsphereUrl} target="_blank" rel="noopener">
           Go to vSphere
         </Button>
       </Box>

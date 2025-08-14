@@ -48,17 +48,17 @@ const dashboardLayout = () => (
 export const dashboardRoutes: RouteObject[] = [
   {
     path: 'dashboard',
-    element: CONFIG.auth.skip ? dashboardLayout() : <AuthGuard>{dashboardLayout()}</AuthGuard>,
+    element: dashboardLayout(),
     children: [
       { element: <IndexPage />, index: true },
-      { path: 'two', element: <PageTwo /> },
-      { path: 'three', element: <PageThree /> },
+      { path: 'workorders_vm', element: <PageTwo /> },
+      { path: 'vms', element: <PageThree /> },
       {
-        path: 'group',
+        path: 'deployments',
         children: [
           { element: <PageFour />, index: true },
-          { path: 'five', element: <PageFive /> },
-          { path: 'six', element: <PageSix /> },
+          { path: 'ansible', element: <PageFive /> },
+          { path: 'ci_cd', element: <PageSix /> },
         ],
       },
       { path: 'workorder/request', element: <WorkorderRequestFormPage /> },
