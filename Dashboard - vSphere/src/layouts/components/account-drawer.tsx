@@ -12,6 +12,7 @@ import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
+import Button from '@mui/material/Button';
 
 import { paths } from 'src/routes/paths';
 import { usePathname } from 'src/routes/hooks';
@@ -26,7 +27,6 @@ import { AnimateBorder } from 'src/components/animate';
 
 import { useMockedUser } from 'src/auth/hooks';
 
-import { UpgradeBlock } from './nav-upgrade';
 import { AccountButton } from './account-button';
 import { SignOutButton } from './sign-out-button';
 
@@ -87,24 +87,24 @@ export function AccountDrawer({ data = [], sx, ...other }: AccountDrawerProps) {
               underline="none"
               onClick={onClose}
               sx={{
-                p: 1,
+                p: 0.75,
                 width: 1,
                 display: 'flex',
-                typography: 'body2',
+                typography: 'body1',
                 alignItems: 'center',
                 color: 'text.secondary',
-                '& svg': { width: 24, height: 24 },
+                '& svg': { width: 26, height: 26 },
                 '&:hover': { color: 'text.primary' },
               }}
             >
               {option.icon}
 
-              <Box component="span" sx={{ ml: 2 }}>
+              <Box component="span" sx={{ ml: 2.5 }}>
                 {option.label === 'Home' ? rootLabel : option.label}
               </Box>
 
               {option.info && (
-                <Label color="error" sx={{ ml: 1 }}>
+                <Label color="error" sx={{ ml: 'auto' }}>
                   {option.info}
                 </Label>
               )}
@@ -164,7 +164,36 @@ export function AccountDrawer({ data = [], sx, ...other }: AccountDrawerProps) {
             <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }} noWrap>
               {user?.email}
             </Typography>
+
+            <Box
+              sx={{
+                mt: 2,
+                p: 1.5,
+                width: '100%',
+                borderRadius: 1,
+                bgcolor: (theme) => varAlpha(theme.vars.palette.primary.mainChannel, 0.08),
+                border: (theme) => `1px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.16)}`,
+              }}
+            >
+              <Button
+                fullWidth
+                variant="soft"
+                size="small"
+                startIcon={<Iconify icon="solar:users-group-rounded-bold-duotone" />}
+                onClick={() => {}}
+                sx={{
+                  color: 'primary.main',
+                  '&:hover': {
+                    bgcolor: (theme) => varAlpha(theme.vars.palette.primary.mainChannel, 0.16),
+                  },
+                }}
+              >
+                Switch Account
+              </Button>
+            </Box>
           </Box>
+
+          {renderList()}
 
           <Box
             sx={{
@@ -173,39 +202,9 @@ export function AccountDrawer({ data = [], sx, ...other }: AccountDrawerProps) {
               flexWrap: 'wrap',
               display: 'flex',
               justifyContent: 'center',
+              borderTop: (theme) => `dashed 1px ${theme.vars.palette.divider}`,
             }}
           >
-            {Array.from({ length: 3 }, (_, index) => (
-              <Tooltip
-                key={_mock.fullName(index + 1)}
-                title={`Switch to: ${_mock.fullName(index + 1)}`}
-              >
-                <Avatar
-                  alt={_mock.fullName(index + 1)}
-                  src={_mock.image.avatar(index + 1)}
-                  onClick={() => {}}
-                />
-              </Tooltip>
-            ))}
-
-            <Tooltip title="Add account">
-              <IconButton
-                sx={[
-                  (theme) => ({
-                    bgcolor: varAlpha(theme.vars.palette.grey['500Channel'], 0.08),
-                    border: `dashed 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.32)}`,
-                  }),
-                ]}
-              >
-                <Iconify icon="mingcute:add-line" />
-              </IconButton>
-            </Tooltip>
-          </Box>
-
-          {renderList()}
-
-          <Box sx={{ px: 2.5, py: 3 }}>
-            <UpgradeBlock />
           </Box>
         </Scrollbar>
 

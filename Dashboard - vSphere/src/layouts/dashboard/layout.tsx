@@ -11,7 +11,7 @@ import Alert from '@mui/material/Alert';
 import { useTheme } from '@mui/material/styles';
 import { iconButtonClasses } from '@mui/material/IconButton';
 
-import { _contacts } from 'src/_mock';
+import { _mock } from 'src/_mock';
 
 import { Logo } from 'src/components/logo';
 import { useSettingsContext } from 'src/components/settings';
@@ -33,7 +33,6 @@ import { LayoutSection } from '../core/layout-section';
 import { AccountDrawer } from '../components/account-drawer';
 import { SettingsButton } from '../components/settings-button';
 import { LanguagePopover } from '../components/language-popover';
-import { ContactsPopover } from '../components/contacts-popover';
 import { WorkspacesPopover } from '../components/workspaces-popover';
 import { navData as dashboardNavData } from '../nav-config-dashboard';
 import { dashboardLayoutVars, dashboardNavColorVars } from './css-vars';
@@ -231,9 +230,6 @@ export function DashboardLayout({
               archived: archivedNotifications.map((n) => ({ ...n, isUnRead: n.isUnRead && !seen[n.id] })),
             }}
           />
-
-          {/** @slot Contacts popover */}
-          <ContactsPopover data={_contacts} />
 
           {/** @slot Settings button */}
           <SettingsButton />
