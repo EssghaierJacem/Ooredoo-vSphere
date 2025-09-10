@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.routers import clusters, hosts, datastores, vms, system, history
+from api.routers import clusters, hosts, datastores, vms, system, history, workorders, networks, vni_workorders
 from app.config import settings
 
 app = FastAPI(
@@ -27,6 +27,9 @@ app.include_router(hosts.router)
 app.include_router(datastores.router)
 app.include_router(vms.router)
 app.include_router(history.router)
+app.include_router(workorders.router)
+app.include_router(networks.router)
+app.include_router(vni_workorders.router)
 
 @app.get("/")
 def root():

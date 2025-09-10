@@ -1,0 +1,1 @@
+export { default as VNIWorkOrderListView } from './vni-workorder-list-view'; 

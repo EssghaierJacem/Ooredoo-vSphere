@@ -3,6 +3,7 @@ import type { Dayjs, OpUnitType } from 'dayjs';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import utc from 'dayjs/plugin/utc';
 
 // ----------------------------------------------------------------------
 
@@ -30,6 +31,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
+dayjs.extend(utc);
 
 // ----------------------------------------------------------------------
 
@@ -113,14 +115,25 @@ export function fTimestamp(date: DatePickerFormat): number | 'Invalid date' {
 // ----------------------------------------------------------------------
 
 /**
- * @output a few seconds, 2 years
+ * @output a few seconds ago, 2 years ago, etc.
  */
 export function fToNow(date: DatePickerFormat): string {
   if (!isValidDate(date)) {
     return 'Invalid date';
   }
-
-  return dayjs(date).toNow(true);
+  const now = dayjs();
+  const d = dayjs(date);
+  if (now.isAfter(d)) {
+    // If less than 10 seconds ago, show 'just now'
+    if (now.diff(d, 'second') < 10) return 'just now';
+    return d.from(now); // e.g. '2 minutes ago', 'an hour ago', etc.
+  } else if (now.isBefore(d)) {
+    // If in the future, show the actual date/time
+    return d.format('DD MMM YYYY, h:mm a');
+  } else {
+    // If exactly now, show the actual date/time
+    return d.format('DD MMM YYYY, h:mm a');
+  }
 }
 
 // ----------------------------------------------------------------------

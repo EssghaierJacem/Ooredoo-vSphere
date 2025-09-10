@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from utils.safe_math import safe_div
 from services.vsphere.datastore_info import (
     get_datastores_info, 
     get_datastore_by_name, 

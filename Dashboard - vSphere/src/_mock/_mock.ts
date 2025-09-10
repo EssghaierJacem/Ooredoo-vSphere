@@ -37,7 +37,8 @@ import {
 
 export const _mock = {
   id: (index: number) => _id[index],
-  time: (index: number) => fSub({ days: index, hours: index }),
+  // Always subtract at least 1 hour so first notification is not 'just now'
+  time: (index: number) => fSub({ days: index, hours: index + 1 }),
   boolean: (index: number) => _booleans[index],
   role: (index: number) => _roles[index],
   // Text

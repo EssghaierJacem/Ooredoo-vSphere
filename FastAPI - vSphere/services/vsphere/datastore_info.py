@@ -1,5 +1,6 @@
 from pyVmomi import vim
 from .connection import get_vsphere_connection
+from utils.safe_math import safe_div
 
 def get_datastores_info():
     """
@@ -24,6 +25,7 @@ def get_datastores_info():
                 used_gb = capacity_gb - free_gb
                 
                 datastores.append({
+                    'id': getattr(ds, '_moId', None),
                     'name': summary.name,
                     'capacity_gb': capacity_gb,
                     'free_space_gb': free_gb,

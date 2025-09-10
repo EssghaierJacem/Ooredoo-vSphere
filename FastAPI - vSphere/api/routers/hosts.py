@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from utils.safe_math import safe_div
 from services.vsphere.host_info import get_hosts_info, get_host_by_name, get_hosts_by_cluster
 
 router = APIRouter(

@@ -1,32 +1,27 @@
-import type { Theme, SxProps } from '@mui/material/styles';
-import type { ButtonBaseProps } from '@mui/material/ButtonBase';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
+import ButtonBase from '@mui/material/ButtonBase';
+import Typography from '@mui/material/Typography';
+import { useTheme } from '@mui/material/styles';
+import { SxProps, Theme } from '@mui/material/styles';
 
-import { useState, useCallback } from 'react';
 import { usePopover } from 'minimal-shared/hooks';
 
-import Box from '@mui/material/Box';
-import Avatar from '@mui/material/Avatar';
-import Divider from '@mui/material/Divider';
-import MenuList from '@mui/material/MenuList';
-import MenuItem from '@mui/material/MenuItem';
-import Typography from '@mui/material/Typography';
-import ButtonBase from '@mui/material/ButtonBase';
-import Button, { buttonClasses } from '@mui/material/Button';
-
-import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
-import { Scrollbar } from 'src/components/scrollbar';
 import { CustomPopover } from 'src/components/custom-popover';
+import { Label } from 'src/components/label';
 
 // ----------------------------------------------------------------------
 
-export type WorkspacesPopoverProps = ButtonBaseProps & {
+export type WorkspacesPopoverProps = {
   data?: {
     id: string;
     name: string;
-    logo: string;
     plan: string;
+    logo: string;
   }[];
+  sx?: any;
 };
 
 export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopoverProps) {
@@ -34,15 +29,7 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
 
   const { open, anchorEl, onClose, onOpen } = usePopover();
 
-  const [workspace, setWorkspace] = useState(data[0]);
-
-  const handleChangeWorkspace = useCallback(
-    (newValue: (typeof data)[0]) => {
-      setWorkspace(newValue);
-      onClose();
-    },
-    [onClose]
-  );
+  const currentWorkspace = data[0] || { name: 'Cloud Department', logo: '' };
 
   const buttonBg: SxProps<Theme> = {
     height: 1,
@@ -81,8 +68,8 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
     >
       <Box
         component="img"
-        alt={workspace?.name}
-        src={workspace?.logo}
+        alt={currentWorkspace?.name}
+        src={currentWorkspace?.logo}
         sx={{ width: 24, height: 24, borderRadius: '50%' }}
       />
 
@@ -90,18 +77,18 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
         component="span"
         sx={{ typography: 'subtitle2', display: { xs: 'none', [mediaQuery]: 'inline-flex' } }}
       >
-        {workspace?.name}
+        {currentWorkspace?.name}
       </Box>
 
       <Label
-        color={workspace?.plan === 'Free' ? 'default' : 'info'}
+        color="info"
         sx={{
           height: 22,
           cursor: 'inherit',
           display: { xs: 'none', [mediaQuery]: 'inline-flex' },
         }}
       >
-        {workspace?.plan}
+        Pro
       </Label>
 
       <Iconify width={16} icon="carbon:chevron-sort" sx={{ color: 'text.disabled' }} />
@@ -118,31 +105,14 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
         paper: { sx: { mt: 0.5, ml: -1.55, width: 240 } },
       }}
     >
-      <Scrollbar sx={{ maxHeight: 240 }}>
-        <MenuList>
-          {data.map((option) => (
-            <MenuItem
-              key={option.id}
-              selected={option.id === workspace?.id}
-              onClick={() => handleChangeWorkspace(option)}
-              sx={{ height: 48 }}
-            >
-              <Avatar alt={option.name} src={option.logo} sx={{ width: 24, height: 24 }} />
-
-              <Typography
-                noWrap
-                component="span"
-                variant="body2"
-                sx={{ flexGrow: 1, fontWeight: 'fontWeightMedium' }}
-              >
-                {option.name}
-              </Typography>
-
-              <Label color={option.plan === 'Free' ? 'default' : 'info'}>{option.plan}</Label>
-            </MenuItem>
-          ))}
-        </MenuList>
-      </Scrollbar>
+      <Box sx={{ p: 2, textAlign: 'center' }}>
+        <Typography variant="h6" sx={{ mb: 1 }}>
+          Cloud Department
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Current workspace
+        </Typography>
+      </Box>
 
       <Divider sx={{ my: 0.5, borderStyle: 'dashed' }} />
 
@@ -156,7 +126,7 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
           gap: 2,
           justifyContent: 'flex-start',
           fontWeight: 'fontWeightMedium',
-          [`& .${buttonClasses.startIcon}`]: {
+          '& .MuiButton-startIcon': {
             m: 0,
             width: 24,
             height: 24,

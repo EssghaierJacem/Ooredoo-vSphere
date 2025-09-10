@@ -1,5 +1,6 @@
 from pyVmomi import vim
 from .connection import get_vsphere_connection
+from utils.safe_math import safe_div
 
 def get_vms_info():
     """

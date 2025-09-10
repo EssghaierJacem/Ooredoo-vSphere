@@ -1,0 +1,738 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 17.4
+-- Dumped by pg_dump version 17.4
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: pg_database_owner
+--
+
+CREATE SCHEMA public;
+
+
+ALTER SCHEMA public OWNER TO pg_database_owner;
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: pg_database_owner
+--
+
+COMMENT ON SCHEMA public IS 'standard public schema';
+
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: clusters; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.clusters (
+    id integer NOT NULL,
+    name text NOT NULL,
+    num_hosts integer,
+    num_vms integer,
+    vms_running integer,
+    vms_stopped integer,
+    cpu_total_mhz integer,
+    cpu_used_mhz integer,
+    memory_total_gb numeric(10,2),
+    memory_used_gb numeric(10,2),
+    storage_total_gb numeric(10,2),
+    storage_free_gb numeric(10,2),
+    overall_status text,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.clusters OWNER TO postgres;
+
+--
+-- Name: clusters_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.clusters_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.clusters_id_seq OWNER TO postgres;
+
+--
+-- Name: clusters_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.clusters_id_seq OWNED BY public.clusters.id;
+
+
+--
+-- Name: datastores; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.datastores (
+    id integer NOT NULL,
+    name text NOT NULL,
+    cluster_id integer,
+    capacity_gb numeric(10,2),
+    free_space_gb numeric(10,2),
+    accessible boolean,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.datastores OWNER TO postgres;
+
+--
+-- Name: datastores_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.datastores_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.datastores_id_seq OWNER TO postgres;
+
+--
+-- Name: datastores_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.datastores_id_seq OWNED BY public.datastores.id;
+
+
+--
+-- Name: hosts; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.hosts (
+    id integer NOT NULL,
+    name text NOT NULL,
+    ip_address text,
+    cluster_id integer,
+    cpu_model text,
+    cpu_cores integer,
+    cpu_total_mhz integer,
+    cpu_used_mhz integer,
+    memory_total_gb numeric(10,2),
+    memory_used_gb numeric(10,2),
+    power_state text,
+    connection_state text,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.hosts OWNER TO postgres;
+
+--
+-- Name: hosts_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.hosts_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.hosts_id_seq OWNER TO postgres;
+
+--
+-- Name: hosts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.hosts_id_seq OWNED BY public.hosts.id;
+
+
+--
+-- Name: monitoring_data; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.monitoring_data (
+    id integer NOT NULL,
+    "timestamp" timestamp without time zone,
+    data_type character varying,
+    entity_name character varying,
+    data_json text
+);
+
+
+ALTER TABLE public.monitoring_data OWNER TO postgres;
+
+--
+-- Name: monitoring_data_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.monitoring_data_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.monitoring_data_id_seq OWNER TO postgres;
+
+--
+-- Name: monitoring_data_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.monitoring_data_id_seq OWNED BY public.monitoring_data.id;
+
+
+--
+-- Name: system_metrics; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.system_metrics (
+    id integer NOT NULL,
+    "timestamp" timestamp without time zone,
+    metric_type character varying,
+    value double precision,
+    unit character varying,
+    description character varying
+);
+
+
+ALTER TABLE public.system_metrics OWNER TO postgres;
+
+--
+-- Name: system_metrics_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.system_metrics_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.system_metrics_id_seq OWNER TO postgres;
+
+--
+-- Name: system_metrics_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.system_metrics_id_seq OWNED BY public.system_metrics.id;
+
+
+--
+-- Name: vms; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.vms (
+    id integer NOT NULL,
+    name text NOT NULL,
+    host_name text,
+    ip_address text,
+    power_state text,
+    cpu_count integer,
+    memory_mb integer,
+    cluster_id integer,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.vms OWNER TO postgres;
+
+--
+-- Name: vms_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.vms_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.vms_id_seq OWNER TO postgres;
+
+--
+-- Name: vms_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.vms_id_seq OWNED BY public.vms.id;
+
+
+--
+-- Name: vni_workorders; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.vni_workorders (
+    id integer NOT NULL,
+    owner character varying NOT NULL,
+    requested_date timestamp without time zone NOT NULL,
+    requested_by character varying NOT NULL,
+    virtual_machines jsonb,
+    deadline timestamp without time zone NOT NULL,
+    project character varying NOT NULL,
+    t0_gw character varying NOT NULL,
+    t1_gw character varying NOT NULL,
+    description character varying NOT NULL,
+    vni_name character varying NOT NULL,
+    cidr character varying NOT NULL,
+    subnet_mask character varying NOT NULL,
+    gateway character varying NOT NULL,
+    first_ip character varying NOT NULL,
+    last_ip character varying NOT NULL,
+    number_of_ips integer NOT NULL,
+    status character varying DEFAULT 'pending'::character varying,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    last_execution_log text,
+    notes text,
+    priority character varying DEFAULT 'normal'::character varying,
+    assigned_to character varying
+);
+
+
+ALTER TABLE public.vni_workorders OWNER TO postgres;
+
+--
+-- Name: vni_workorders_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.vni_workorders_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.vni_workorders_id_seq OWNER TO postgres;
+
+--
+-- Name: vni_workorders_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.vni_workorders_id_seq OWNED BY public.vni_workorders.id;
+
+
+--
+-- Name: workorders; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.workorders (
+    id integer NOT NULL,
+    name text NOT NULL,
+    os text NOT NULL,
+    host_version text NOT NULL,
+    cpu integer NOT NULL,
+    ram integer NOT NULL,
+    disk numeric(10,2) NOT NULL,
+    status text DEFAULT 'pending'::text,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    host_id character varying,
+    vm_id character varying,
+    datastore_id character varying,
+    disks jsonb,
+    nics jsonb,
+    last_execution_log text,
+    resource_pool_id character varying,
+    ip_pool_id character varying,
+    template_id character varying,
+    hostname character varying,
+    ip character varying,
+    netmask character varying,
+    gateway character varying,
+    domain character varying,
+    hardware_version character varying,
+    scsi_controller_type character varying,
+    folder_id character varying,
+    network_id character varying,
+    datacenter_name character varying,
+    network_name character varying(255),
+    network_moid character varying(255),
+    network_vlan integer DEFAULT 0,
+    network_type character varying(50),
+    network_description text
+);
+
+
+ALTER TABLE public.workorders OWNER TO postgres;
+
+--
+-- Name: workorders_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.workorders_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.workorders_id_seq OWNER TO postgres;
+
+--
+-- Name: workorders_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.workorders_id_seq OWNED BY public.workorders.id;
+
+
+--
+-- Name: clusters id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.clusters ALTER COLUMN id SET DEFAULT nextval('public.clusters_id_seq'::regclass);
+
+
+--
+-- Name: datastores id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.datastores ALTER COLUMN id SET DEFAULT nextval('public.datastores_id_seq'::regclass);
+
+
+--
+-- Name: hosts id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.hosts ALTER COLUMN id SET DEFAULT nextval('public.hosts_id_seq'::regclass);
+
+
+--
+-- Name: monitoring_data id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.monitoring_data ALTER COLUMN id SET DEFAULT nextval('public.monitoring_data_id_seq'::regclass);
+
+
+--
+-- Name: system_metrics id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.system_metrics ALTER COLUMN id SET DEFAULT nextval('public.system_metrics_id_seq'::regclass);
+
+
+--
+-- Name: vms id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.vms ALTER COLUMN id SET DEFAULT nextval('public.vms_id_seq'::regclass);
+
+
+--
+-- Name: vni_workorders id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.vni_workorders ALTER COLUMN id SET DEFAULT nextval('public.vni_workorders_id_seq'::regclass);
+
+
+--
+-- Name: workorders id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.workorders ALTER COLUMN id SET DEFAULT nextval('public.workorders_id_seq'::regclass);
+
+
+--
+-- Data for Name: clusters; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.clusters (id, name, num_hosts, num_vms, vms_running, vms_stopped, cpu_total_mhz, cpu_used_mhz, memory_total_gb, memory_used_gb, storage_total_gb, storage_free_gb, overall_status, created_at) FROM stdin;
+1	vCluster	2	2	2	0	24960	743	19.99	15.56	191.50	145.09	red	2025-07-12 17:15:20.104362
+2	vCluster	2	2	2	0	24960	994	19.99	15.29	191.50	144.76	red	2025-07-15 16:04:04.8781
+\.
+
+
+--
+-- Data for Name: datastores; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.datastores (id, name, cluster_id, capacity_gb, free_space_gb, accessible, created_at) FROM stdin;
+1	Datastore	1	141.75	96.75	t	2025-07-12 17:15:20.12321
+2	Datastore - esx02	1	49.75	48.34	t	2025-07-12 17:15:20.12321
+3	Datastore	2	141.75	96.41	t	2025-07-15 16:04:04.931063
+4	Datastore - esx02	2	49.75	48.34	t	2025-07-15 16:04:04.931063
+\.
+
+
+--
+-- Data for Name: hosts; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.hosts (id, name, ip_address, cluster_id, cpu_model, cpu_cores, cpu_total_mhz, cpu_used_mhz, memory_total_gb, memory_used_gb, power_state, connection_state, created_at) FROM stdin;
+1	192.168.1.16	192.168.1.50	1	Intel(R) Core(TM) i5-10300H CPU @ 2.50GHz	8	19968	709	16.00	14.26	poweredOn	connected	2025-07-12 17:15:20.133318
+2	192.168.1.18	192.168.1.50	1	Intel(R) Core(TM) i5-10300H CPU @ 2.50GHz	2	4992	34	4.00	1.30	poweredOn	connected	2025-07-12 17:15:20.133318
+3	192.168.1.18	192.168.1.50	2	Intel(R) Core(TM) i5-10300H CPU @ 2.50GHz	2	4992	43	4.00	1.31	poweredOn	connected	2025-07-15 16:04:04.947883
+4	192.168.1.16	192.168.1.50	2	Intel(R) Core(TM) i5-10300H CPU @ 2.50GHz	8	19968	951	16.00	13.98	poweredOn	connected	2025-07-15 16:04:04.947883
+\.
+
+
+--
+-- Data for Name: monitoring_data; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.monitoring_data (id, "timestamp", data_type, entity_name, data_json) FROM stdin;
+\.
+
+
+--
+-- Data for Name: system_metrics; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.system_metrics (id, "timestamp", metric_type, value, unit, description) FROM stdin;
+1	2025-07-12 17:15:20.136638	cpu_usage	2.9767604352881127	percent	Overall CPU usage across all hosts
+2	2025-07-12 17:15:20.136638	memory_usage	77.8604319210123	percent	Overall memory usage across all hosts
+3	2025-07-12 17:15:20.136638	storage_usage	24.234558583550914	percent	Overall storage usage across all datastores
+4	2025-07-15 16:04:04.955945	cpu_usage	3.9823686038713104	percent	Overall CPU usage across all hosts
+5	2025-07-15 16:04:04.955945	memory_usage	76.48280349826632	percent	Overall memory usage across all hosts
+6	2025-07-15 16:04:04.955945	storage_usage	24.409472911227155	percent	Overall storage usage across all datastores
+\.
+
+
+--
+-- Data for Name: vms; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.vms (id, name, host_name, ip_address, power_state, cpu_count, memory_mb, cluster_id, created_at) FROM stdin;
+1	VMware vCenter Server	N/A	1, 9, 2, ., 1, 6, 8, ., 1, ., 5, 0	poweredOn	2	14336	\N	2025-07-12 17:15:20.144124
+2	vCLS-069ee43f-2993-4644-9631-41f75f2990f4	N/A		poweredOn	1	128	\N	2025-07-12 17:15:20.144124
+3	VMware vCenter Server	N/A	1, 9, 2, ., 1, 6, 8, ., 1, ., 5, 0	poweredOn	2	14336	\N	2025-07-15 16:04:04.963204
+4	vCLS-069ee43f-2993-4644-9631-41f75f2990f4	N/A		poweredOn	1	128	\N	2025-07-15 16:04:04.963204
+\.
+
+
+--
+-- Data for Name: vni_workorders; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.vni_workorders (id, owner, requested_date, requested_by, virtual_machines, deadline, project, t0_gw, t1_gw, description, vni_name, cidr, subnet_mask, gateway, first_ip, last_ip, number_of_ips, status, created_at, updated_at, last_execution_log, notes, priority, assigned_to) FROM stdin;
+2	Owner	2025-07-29 09:35:42.148215	Jacem	[]	2025-07-29 09:35:42.148215	Project 	itaas-t0-gw	itaas-t0-gw	Description	VNI	10.184.36.160/28	255.255.255.240	10.184.36.174	10.184.36.174	10.184.36.176	3	pending	2025-07-29 09:35:42.148215	2025-07-29 09:35:42.148215	\N	\N	normal	\N
+3	Foulen	2025-07-29 12:28:32.855316	Falteni	[]	2025-07-29 12:28:32.855316	Project	Gateway1	2	Description	Name	10.184.36.160/28	255.255.255.240	10.184.36.174	10.184.36.162	10.184.36.166	5	pending	2025-07-29 12:28:32.870139	2025-07-29 12:28:32.870139	\N	\N	normal	\N
+1	Data Sciences	2025-07-21 00:00:00	TEKAYA ALI	[]	2025-07-21 23:59:59	Swap VOMS ERS TESTBED	itaas-t0-gw	itaas-t1-gw	ERS-APP	ITAAS-ERS-APP-TESTBED-10.184.36.160-28	10.184.36.160/28	255.255.255.240	10.184.36.174	10.184.36.161	10.184.36.174	14	approved	2025-07-29 08:55:53.064733	2025-08-04 14:11:27.482118	\N	VNI creation for ERS application in testbed environment	critical	\N
+\.
+
+
+--
+-- Data for Name: workorders; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.workorders (id, name, os, host_version, cpu, ram, disk, status, created_at, host_id, vm_id, datastore_id, disks, nics, last_execution_log, resource_pool_id, ip_pool_id, template_id, hostname, ip, netmask, gateway, domain, hardware_version, scsi_controller_type, folder_id, network_id, datacenter_name, network_name, network_moid, network_vlan, network_type, network_description) FROM stdin;
+4	Jacem	centos-7	esxi-7.0	2	5	60.00	Pending	2025-07-18 16:49:46.084697	192.168.1.16	VMware vCenter Server	Datastore	\N	[{"ip": "", "ip_pool_id": "ippool-1", "network_id": "1"}]	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	0	\N	\N
+2	Mekina	centos-7	esxi-6.7	5	4	20.00	Rejected	2025-07-16 17:21:05.77407	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	0	\N	\N
+3	Something	ubuntu-20.04	esxi-7.0	1	1	1.00	Pending	2025-07-17 16:22:06.757957	host-14	VMware vCenter Server	Datastore	[{"size": "20", "provisioning": "thin"}]	[{"ip": "192.168.1.51", "mask": "24", "network_id": "1"}]	--- TFVARS CONTENT ---\n\n    vm_name = "Something"\n    os = "ubuntu-20.04"\n    cpu = 1\n    ram = 1\n    disk = 1.0\n    \n--- END TFVARS ---\n--- TERRAFORM INIT STDOUT ---\n[0m[1mInitializing the backend...[0m\n[0m[1mInitializing provider plugins...[0m\n- Reusing previous version of hashicorp/vsphere from the dependency lock file\n- Using previously-installed hashicorp/vsphere v2.12.0\n\n[33mâ•·[0m[0m\n[33mâ”‚[0m [0m[1m[33mWarning: [0m[0m[1mAdditional provider information from registry[0m\n[33mâ”‚[0m [0m\n[33mâ”‚[0m [0m[0mThe remote registry returned warnings for\n[33mâ”‚[0m [0mregistry.terraform.io/hashicorp/vsphere:\n[33mâ”‚[0m [0m- For users on Terraform 0.13 or greater, this provider has moved to\n[33mâ”‚[0m [0mvmware/vsphere. Please update your source in required_providers.\n[33mâ•µ[0m[0m\n[0m[1m[32mTerraform has been successfully initialized![0m[32m[0m\n[0m[32m\nYou may now begin working with Terraform. Try running "terraform plan" to see\nany changes that are required for your infrastructure. All Terraform commands\nshould now work.\n\nIf you ever set or change modules or backend configuration for Terraform,\nrerun this command to reinitialize your working directory. If you forget, other\ncommands will detect it and remind you to do so if necessary.[0m\n\n--- TERRAFORM INIT STDERR ---\n\n--- TERRAFORM APPLY STDOUT ---\n\nTerraform used the selected providers to generate the following execution\nplan. Resource actions are indicated with the following symbols:\n  [32m+[0m create[0m\n\nTerraform will perform the following actions:\n\n[1m  # vsphere_virtual_machine.vm[0m will be created\n[0m  [32m+[0m[0m resource "vsphere_virtual_machine" "vm" {\n      [32m+[0m[0m annotation                              = (known after apply)\n      [32m+[0m[0m boot_retry_delay                        = 10000\n      [32m+[0m[0m change_version                          = (known after apply)\n      [32m+[0m[0m cpu_limit                               = -1\n      [32m+[0m[0m cpu_share_count                         = (known after apply)\n      [32m+[0m[0m cpu_share_level                         = "normal"\n      [32m+[0m[0m datastore_id                            = (known after apply)\n      [32m+[0m[0m default_ip_address                      = (known after apply)\n      [32m+[0m[0m ept_rvi_mode                            = (known after apply)\n      [32m+[0m[0m extra_config_reboot_required            = true\n      [32m+[0m[0m firmware                                = "bios"\n      [32m+[0m[0m force_power_off                         = true\n      [32m+[0m[0m guest_id                                = "ubuntu-20.04"\n      [32m+[0m[0m guest_ip_addresses                      = (known after apply)\n      [32m+[0m[0m hardware_version                        = (known after apply)\n      [32m+[0m[0m host_system_id                          = "host-12"\n      [32m+[0m[0m hv_mode                                 = (known after apply)\n      [32m+[0m[0m id                                      = (known after apply)\n      [32m+[0m[0m ide_controller_count                    = 2\n      [32m+[0m[0m imported                                = (known after apply)\n      [32m+[0m[0m latency_sensitivity                     = "normal"\n      [32m+[0m[0m memory                                  = 1024\n      [32m+[0m[0m memory_limit                            = -1\n      [32m+[0m[0m memory_share_count                      = (known after apply)\n      [32m+[0m[0m memory_share_level                      = "normal"\n      [32m+[0m[0m migrate_wait_timeout                    = 30\n      [32m+[0m[0m moid                                    = (known after apply)\n      [32m+[0m[0m name                                    = "Something"\n      [32m+[0m[0m num_cores_per_socket                    = 1\n      [32m+[0m[0m num_cpus                                = 1\n      [32m+[0m[0m nvme_controller_count                   = 0\n      [32m+[0m[0m power_state                             = (known after apply)\n      [32m+[0m[0m poweron_timeout                         = 300\n      [32m+[0m[0m reboot_required                         = (known after apply)\n      [32m+[0m[0m resource_pool_id                        = "resgroup-9"\n      [32m+[0m[0m run_tools_scripts_after_power_on        = true\n      [32m+[0m[0m run_tools_scripts_after_resume          = true\n      [32m+[0m[0m run_tools_scripts_before_guest_shutdown = true\n      [32m+[0m[0m run_tools_scripts_before_guest_standby  = true\n      [32m+[0m[0m sata_controller_count                   = 0\n      [32m+[0m[0m scsi_bus_sharing                        = "noSharing"\n      [32m+[0m[0m scsi_controller_count                   = 1\n      [32m+[0m[0m scsi_type                               = "pvscsi"\n      [32m+[0m[0m shutdown_wait_timeout                   = 3\n      [32m+[0m[0m storage_policy_id                       = (known after apply)\n      [32m+[0m[0m swap_placement_policy                   = "inherit"\n      [32m+[0m[0m sync_time_with_host                     = true\n      [32m+[0m[0m tools_upgrade_policy                    = "manual"\n      [32m+[0m[0m uuid                                    = (known after apply)\n      [32m+[0m[0m vapp_transport                          = (known after apply)\n      [32m+[0m[0m vmware_tools_status                     = (known after apply)\n      [32m+[0m[0m vmx_path                                = (known after apply)\n      [32m+[0m[0m wait_for_guest_ip_timeout               = 0\n      [32m+[0m[0m wait_for_guest_net_routable             = true\n      [32m+[0m[0m wait_for_guest_net_timeout              = 5\n\n      [32m+[0m[0m disk {\n          [32m+[0m[0m attach            = false\n          [32m+[0m[0m controller_type   = "scsi"\n          [32m+[0m[0m datastore_id      = "<computed>"\n          [32m+[0m[0m device_address    = (known after apply)\n          [32m+[0m[0m disk_mode         = "persistent"\n          [32m+[0m[0m disk_sharing      = "sharingNone"\n          [32m+[0m[0m eagerly_scrub     = false\n          [32m+[0m[0m io_limit          = -1\n          [32m+[0m[0m io_reservation    = 0\n          [32m+[0m[0m io_share_count    = 0\n          [32m+[0m[0m io_share_level    = "normal"\n          [32m+[0m[0m keep_on_remove    = false\n          [32m+[0m[0m key               = 0\n          [32m+[0m[0m label             = "disk1"\n          [32m+[0m[0m path              = (known after apply)\n          [32m+[0m[0m size              = 20\n          [32m+[0m[0m storage_policy_id = (known after apply)\n          [32m+[0m[0m thin_provisioned  = true\n          [32m+[0m[0m unit_number       = 0\n          [32m+[0m[0m uuid              = (known after apply)\n          [32m+[0m[0m write_through     = false\n        }\n\n      [32m+[0m[0m network_interface {\n          [32m+[0m[0m adapter_type          = "vmxnet3"\n          [32m+[0m[0m bandwidth_limit       = -1\n          [32m+[0m[0m bandwidth_reservation = 0\n          [32m+[0m[0m bandwidth_share_count = (known after apply)\n          [32m+[0m[0m bandwidth_share_level = "normal"\n          [32m+[0m[0m device_address        = (known after apply)\n          [32m+[0m[0m key                   = (known after apply)\n          [32m+[0m[0m mac_address           = (known after apply)\n          [32m+[0m[0m network_id            = "1"\n        }\n    }\n\n[1mPlan:[0m 1 to add, 0 to change, 0 to destroy.\n[0m\nChanges to Outputs:\n  [32m+[0m[0m vm_id          = (known after apply)\n  [32m+[0m[0m vm_power_state = (known after apply)\n[0m[1mvsphere_virtual_machine.vm: Creating...[0m[0m\n\n--- TERRAFORM APPLY STDERR ---\n[31mâ•·[0m[0m\n[31mâ”‚[0m [0m[1m[31mError: [0m[0m[1mdisk.0: error creating disk: virtual machine with UUID "" not found[0m\n[31mâ”‚[0m [0m\n[31mâ”‚[0m [0m[0m  with vsphere_virtual_machine.vm,\n[31mâ”‚[0m [0m  on main.tf line 21, in resource "vsphere_virtual_machine" "vm":\n[31mâ”‚[0m [0m  21: resource "vsphere_virtual_machine" "vm" [4m{[0m[0m\n[31mâ”‚[0m [0m\n[31mâ•µ[0m[0m\n	resgroup-9	\N	4207915c-2331-46e2-323e-64bbd0ba17e7	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	0	\N	\N
+5	Terraform	ubuntu64Guest	esxi-7.0	1	1	1.00	Approved	2025-07-22 16:53:46.209535	host-14	VMware vCenter Server	datastore-19	[{"size": "20", "provisioning": "thin"}]	[{"ip": "", "network_id": "IDS", "network_name": "IDS"}]	--- TFVARS CONTENT ---\n\n    vm_name = "Terraform"\ndatacenter_name = "Ooredoo - Datacenter"\nos = "ubuntu64Guest"\nhardware_version = "17"\nscsi_controller_type = "pvscsi"\nnics = [{"ip": "", "network_id": "IDS", "network_name": "IDS"}]\ncpu = 1\nram = 1\nhost_system_id = "host-14"\nresource_pool_id = "resgroup-9"\ndatastore_id = "datastore-19"\nhostname = "vm01"\nip = "192.168.1.25"\nnetmask = "255.255.255.0"\ngateway = "192.168.1.1"\ndomain = "example.tn"\n\n--- TERRAFORM INIT STDOUT ---\n[0m[1mInitializing the backend...[0m\n[0m[1mInitializing provider plugins...[0m\n- Reusing previous version of hashicorp/vsphere from the dependency lock file\n- Using previously-installed hashicorp/vsphere v2.12.0\n\n[33mâ•·[0m[0m\n[33mâ”‚[0m [0m[1m[33mWarning: [0m[0m[1mAdditional provider information from registry[0m\n[33mâ”‚[0m [0m\n[33mâ”‚[0m [0m[0mThe remote registry returned warnings for\n[33mâ”‚[0m [0mregistry.terraform.io/hashicorp/vsphere:\n[33mâ”‚[0m [0m- For users on Terraform 0.13 or greater, this provider has moved to\n[33mâ”‚[0m [0mvmware/vsphere. Please update your source in required_providers.\n[33mâ•µ[0m[0m\n[0m[1m[32mTerraform has been successfully initialized![0m[32m[0m\n[0m[32m\nYou may now begin working with Terraform. Try running "terraform plan" to see\nany changes that are required for your infrastructure. All Terraform commands\nshould now work.\n\nIf you ever set or change modules or backend configuration for Terraform,\nrerun this command to reinitialize your working directory. If you forget, other\ncommands will detect it and remind you to do so if necessary.[0m\n\n--- TERRAFORM INIT STDERR ---\n\n--- TERRAFORM APPLY STDOUT ---\n[0m[1mdata.vsphere_datacenter.dc: Reading...[0m[0m\n[0m[1mdata.vsphere_datacenter.dc: Read complete after 0s [id=datacenter-3][0m\n[0m[1mdata.vsphere_network.network: Reading...[0m[0m\n[0m[1mdata.vsphere_datastore.selected: Reading...[0m[0m\n[0m[1mdata.vsphere_network.network: Read complete after 0s [id=network-21][0m\n[0m[1mdata.vsphere_datastore.selected: Read complete after 0s [id=datastore-19][0m\n[0m[1mvsphere_virtual_machine.vm: Refreshing state... [id=4207ce40-6429-f94b-b90d-7bf0bc6bb14e][0m\n\n[1m[36mNote:[0m[1m Objects have changed outside of Terraform\n[0m\nTerraform detected the following changes made outside of Terraform since the\nlast "terraform apply" which may have affected this plan:\n\n[1m  # vsphere_virtual_machine.vm[0m has been deleted\n[0m  [31m-[0m[0m resource "vsphere_virtual_machine" "vm" {\n      [31m-[0m[0m id                                      = "4207ce40-6429-f94b-b90d-7bf0bc6bb14e" [90m-> null[0m[0m\n        name                                    = "Terraform"\n        [90m# (37 unchanged attributes hidden)[0m[0m\n\n        [90m# (2 unchanged blocks hidden)[0m[0m\n    }\n\n\nUnless you have made equivalent changes to your configuration, or ignored the\nrelevant attributes using ignore_changes, the following plan may include\nactions to undo or respond to these changes.\n[90m\nâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€[0m\n\nTerraform used the selected providers to generate the following execution\nplan. Resource actions are indicated with the following symbols:\n  [32m+[0m create[0m\n\nTerraform will perform the following actions:\n\n[1m  # vsphere_virtual_machine.vm[0m will be created\n[0m  [32m+[0m[0m resource "vsphere_virtual_machine" "vm" {\n      [32m+[0m[0m annotation                              = (known after apply)\n      [32m+[0m[0m boot_retry_delay                        = 10000\n      [32m+[0m[0m change_version                          = (known after apply)\n      [32m+[0m[0m cpu_limit                               = -1\n      [32m+[0m[0m cpu_share_count                         = (known after apply)\n      [32m+[0m[0m cpu_share_level                         = "normal"\n      [32m+[0m[0m datastore_id                            = "datastore-19"\n      [32m+[0m[0m default_ip_address                      = (known after apply)\n      [32m+[0m[0m ept_rvi_mode                            = (known after apply)\n      [32m+[0m[0m extra_config_reboot_required            = true\n      [32m+[0m[0m firmware                                = "bios"\n      [32m+[0m[0m force_power_off                         = true\n      [32m+[0m[0m guest_id                                = "ubuntu64Guest"\n      [32m+[0m[0m guest_ip_addresses                      = (known after apply)\n      [32m+[0m[0m hardware_version                        = 17\n      [32m+[0m[0m host_system_id                          = "host-14"\n      [32m+[0m[0m hv_mode                                 = (known after apply)\n      [32m+[0m[0m id                                      = (known after apply)\n      [32m+[0m[0m ide_controller_count                    = 2\n      [32m+[0m[0m imported                                = (known after apply)\n      [32m+[0m[0m latency_sensitivity                     = "normal"\n      [32m+[0m[0m memory                                  = 1024\n      [32m+[0m[0m memory_limit                            = -1\n      [32m+[0m[0m memory_share_count                      = (known after apply)\n      [32m+[0m[0m memory_share_level                      = "normal"\n      [32m+[0m[0m migrate_wait_timeout                    = 30\n      [32m+[0m[0m moid                                    = (known after apply)\n      [32m+[0m[0m name                                    = "Terraform"\n      [32m+[0m[0m num_cores_per_socket                    = 1\n      [32m+[0m[0m num_cpus                                = 1\n      [32m+[0m[0m nvme_controller_count                   = 0\n      [32m+[0m[0m power_state                             = (known after apply)\n      [32m+[0m[0m poweron_timeout                         = 300\n      [32m+[0m[0m reboot_required                         = (known after apply)\n      [32m+[0m[0m resource_pool_id                        = "resgroup-9"\n      [32m+[0m[0m run_tools_scripts_after_power_on        = true\n      [32m+[0m[0m run_tools_scripts_after_resume          = true\n      [32m+[0m[0m run_tools_scripts_before_guest_shutdown = true\n      [32m+[0m[0m run_tools_scripts_before_guest_standby  = true\n      [32m+[0m[0m sata_controller_count                   = 0\n      [32m+[0m[0m scsi_bus_sharing                        = "noSharing"\n      [32m+[0m[0m scsi_controller_count                   = 1\n      [32m+[0m[0m scsi_type                               = "pvscsi"\n      [32m+[0m[0m shutdown_wait_timeout                   = 3\n      [32m+[0m[0m storage_policy_id                       = (known after apply)\n      [32m+[0m[0m swap_placement_policy                   = "inherit"\n      [32m+[0m[0m sync_time_with_host                     = true\n      [32m+[0m[0m tools_upgrade_policy                    = "manual"\n      [32m+[0m[0m uuid                                    = (known after apply)\n      [32m+[0m[0m vapp_transport                          = (known after apply)\n      [32m+[0m[0m vmware_tools_status                     = (known after apply)\n      [32m+[0m[0m vmx_path                                = (known after apply)\n      [32m+[0m[0m wait_for_guest_ip_timeout               = 0\n      [32m+[0m[0m wait_for_guest_net_routable             = true\n      [32m+[0m[0m wait_for_guest_net_timeout              = 5\n\n      [32m+[0m[0m disk {\n          [32m+[0m[0m attach            = false\n          [32m+[0m[0m controller_type   = "scsi"\n          [32m+[0m[0m datastore_id      = "<computed>"\n          [32m+[0m[0m device_address    = (known after apply)\n          [32m+[0m[0m disk_mode         = "persistent"\n          [32m+[0m[0m disk_sharing      = "sharingNone"\n          [32m+[0m[0m eagerly_scrub     = false\n          [32m+[0m[0m io_limit          = -1\n          [32m+[0m[0m io_reservation    = 0\n          [32m+[0m[0m io_share_count    = 0\n          [32m+[0m[0m io_share_level    = "normal"\n          [32m+[0m[0m keep_on_remove    = false\n          [32m+[0m[0m key               = 0\n          [32m+[0m[0m label             = "disk0"\n          [32m+[0m[0m path              = (known after apply)\n          [32m+[0m[0m size              = 20\n          [32m+[0m[0m storage_policy_id = (known after apply)\n          [32m+[0m[0m thin_provisioned  = true\n          [32m+[0m[0m unit_number       = 0\n          [32m+[0m[0m uuid              = (known after apply)\n          [32m+[0m[0m write_through     = false\n        }\n\n      [32m+[0m[0m network_interface {\n          [32m+[0m[0m adapter_type          = "vmxnet3"\n          [32m+[0m[0m bandwidth_limit       = -1\n          [32m+[0m[0m bandwidth_reservation = 0\n          [32m+[0m[0m bandwidth_share_count = (known after apply)\n          [32m+[0m[0m bandwidth_share_level = "normal"\n          [32m+[0m[0m device_address        = (known after apply)\n          [32m+[0m[0m key                   = (known after apply)\n          [32m+[0m[0m mac_address           = (known after apply)\n          [32m+[0m[0m network_id            = "network-21"\n        }\n    }\n\n[1mPlan:[0m 1 to add, 0 to change, 0 to destroy.\n[0m\nChanges to Outputs:\n  [32m+[0m[0m vm_id          = (known after apply)\n  [32m+[0m[0m vm_power_state = (known after apply)\n[0m[1mvsphere_virtual_machine.vm: Creating...[0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [00m10s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [00m20s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [00m30s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [00m40s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [00m50s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [01m00s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [01m10s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [01m20s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [01m30s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [01m40s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [01m50s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [02m00s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [02m10s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [02m20s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [02m30s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [02m40s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [02m50s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [03m00s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [03m10s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [03m20s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [03m30s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [03m40s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [03m50s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [04m00s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [04m10s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [04m20s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [04m30s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [04m40s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [04m50s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [05m00s elapsed][0m[0m\n\n--- TERRAFORM APPLY STDERR ---\n[31mâ•·[0m[0m\n[31mâ”‚[0m [0m[1m[31mError: [0m[0m[1mtimeout waiting for an available IP address[0m\n[31mâ”‚[0m [0m\n[31mâ”‚[0m [0m[0m  with vsphere_virtual_machine.vm,\n[31mâ”‚[0m [0m  on main.tf line 39, in resource "vsphere_virtual_machine" "vm":\n[31mâ”‚[0m [0m  39: resource "vsphere_virtual_machine" "vm" [4m{[0m[0m\n[31mâ”‚[0m [0m\n[31mâ•µ[0m[0m\n	resgroup-9	\N		vm01	192.168.1.25	255.255.255.0	192.168.1.1	example.tn	17	pvscsi			Ooredoo - Datacenter	\N	\N	0	\N	\N
+6	Demo	ubuntu64Guest	esxi-7.0	1	1	20.00	failed	2025-07-26 17:27:45.514775	host-14	vCLS-069ee43f-2993-4644-9631-41f75f2990f4	datastore-19	[{"size": 20, "provisioning": "thin"}]	[{"ip": "", "network_name": "IDS"}]	--- TFVARS CONTENT ---\n\n    vm_name = "Demo"\ndatacenter_name = "Ooredoo - Datacenter"\nos = "ubuntu64Guest"\nhardware_version = "17"\nscsi_controller_type = "pvscsi"\nnics = [{"ip": "", "network_name": "IDS"}]\ncpu = 1\nram = 1\nhost_system_id = "host-14"\nresource_pool_id = "resgroup-9"\ndatastore_id = "datastore-19"\nhostname = "vm01"\nip = "192.168.1.26"\nnetmask = "255.255.255.0"\ngateway = "192.168.1.1"\ndomain = "example.tn"\n\n--- TERRAFORM INIT STDOUT ---\n[0m[1mInitializing the backend...[0m\n[0m[1mInitializing provider plugins...[0m\n- Reusing previous version of hashicorp/vsphere from the dependency lock file\n- Using previously-installed hashicorp/vsphere v2.12.0\n\n[33mâ•·[0m[0m\n[33mâ”‚[0m [0m[1m[33mWarning: [0m[0m[1mAdditional provider information from registry[0m\n[33mâ”‚[0m [0m\n[33mâ”‚[0m [0m[0mThe remote registry returned warnings for\n[33mâ”‚[0m [0mregistry.terraform.io/hashicorp/vsphere:\n[33mâ”‚[0m [0m- For users on Terraform 0.13 or greater, this provider has moved to\n[33mâ”‚[0m [0mvmware/vsphere. Please update your source in required_providers.\n[33mâ•µ[0m[0m\n[0m[1m[32mTerraform has been successfully initialized![0m[32m[0m\n[0m[32m\nYou may now begin working with Terraform. Try running "terraform plan" to see\nany changes that are required for your infrastructure. All Terraform commands\nshould now work.\n\nIf you ever set or change modules or backend configuration for Terraform,\nrerun this command to reinitialize your working directory. If you forget, other\ncommands will detect it and remind you to do so if necessary.[0m\n\n--- TERRAFORM INIT STDERR ---\n\n--- TERRAFORM APPLY STDOUT ---\n[0m[1mdata.vsphere_datacenter.dc: Reading...[0m[0m\n[0m[1mdata.vsphere_datacenter.dc: Read complete after 0s [id=datacenter-3][0m\n[0m[1mdata.vsphere_datastore.selected: Reading...[0m[0m\n[0m[1mdata.vsphere_network.network: Reading...[0m[0m\n[0m[1mdata.vsphere_datastore.selected: Read complete after 0s [id=datastore-19][0m\n[0m[1mdata.vsphere_network.network: Read complete after 0s [id=network-21][0m\n[0m[1mvsphere_virtual_machine.vm: Refreshing state... [id=4207e9e7-5613-32c0-5cdc-f3447ed960fa][0m\n\n[1m[36mNote:[0m[1m Objects have changed outside of Terraform\n[0m\nTerraform detected the following changes made outside of Terraform since the\nlast "terraform apply" which may have affected this plan:\n\n[1m  # vsphere_virtual_machine.vm[0m has been deleted\n[0m  [31m-[0m[0m resource "vsphere_virtual_machine" "vm" {\n      [31m-[0m[0m id                                      = "4207e9e7-5613-32c0-5cdc-f3447ed960fa" [90m-> null[0m[0m\n      [31m-[0m[0m name                                    = "Terraform" [90m-> null[0m[0m\n        [90m# (37 unchanged attributes hidden)[0m[0m\n\n        [90m# (2 unchanged blocks hidden)[0m[0m\n    }\n\n\nUnless you have made equivalent changes to your configuration, or ignored the\nrelevant attributes using ignore_changes, the following plan may include\nactions to undo or respond to these changes.\n[90m\nâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€[0m\n\nTerraform used the selected providers to generate the following execution\nplan. Resource actions are indicated with the following symbols:\n  [32m+[0m create[0m\n\nTerraform will perform the following actions:\n\n[1m  # vsphere_virtual_machine.vm[0m will be created\n[0m  [32m+[0m[0m resource "vsphere_virtual_machine" "vm" {\n      [32m+[0m[0m annotation                              = (known after apply)\n      [32m+[0m[0m boot_retry_delay                        = 10000\n      [32m+[0m[0m change_version                          = (known after apply)\n      [32m+[0m[0m cpu_limit                               = -1\n      [32m+[0m[0m cpu_share_count                         = (known after apply)\n      [32m+[0m[0m cpu_share_level                         = "normal"\n      [32m+[0m[0m datastore_id                            = "datastore-19"\n      [32m+[0m[0m default_ip_address                      = (known after apply)\n      [32m+[0m[0m ept_rvi_mode                            = (known after apply)\n      [32m+[0m[0m extra_config_reboot_required            = true\n      [32m+[0m[0m firmware                                = "bios"\n      [32m+[0m[0m force_power_off                         = true\n      [32m+[0m[0m guest_id                                = "ubuntu64Guest"\n      [32m+[0m[0m guest_ip_addresses                      = (known after apply)\n      [32m+[0m[0m hardware_version                        = 17\n      [32m+[0m[0m host_system_id                          = "host-14"\n      [32m+[0m[0m hv_mode                                 = (known after apply)\n      [32m+[0m[0m id                                      = (known after apply)\n      [32m+[0m[0m ide_controller_count                    = 2\n      [32m+[0m[0m imported                                = (known after apply)\n      [32m+[0m[0m latency_sensitivity                     = "normal"\n      [32m+[0m[0m memory                                  = 1024\n      [32m+[0m[0m memory_limit                            = -1\n      [32m+[0m[0m memory_share_count                      = (known after apply)\n      [32m+[0m[0m memory_share_level                      = "normal"\n      [32m+[0m[0m migrate_wait_timeout                    = 30\n      [32m+[0m[0m moid                                    = (known after apply)\n      [32m+[0m[0m name                                    = "Demo"\n      [32m+[0m[0m num_cores_per_socket                    = 1\n      [32m+[0m[0m num_cpus                                = 1\n      [32m+[0m[0m nvme_controller_count                   = 0\n      [32m+[0m[0m power_state                             = (known after apply)\n      [32m+[0m[0m poweron_timeout                         = 300\n      [32m+[0m[0m reboot_required                         = (known after apply)\n      [32m+[0m[0m resource_pool_id                        = "resgroup-9"\n      [32m+[0m[0m run_tools_scripts_after_power_on        = true\n      [32m+[0m[0m run_tools_scripts_after_resume          = true\n      [32m+[0m[0m run_tools_scripts_before_guest_shutdown = true\n      [32m+[0m[0m run_tools_scripts_before_guest_standby  = true\n      [32m+[0m[0m sata_controller_count                   = 0\n      [32m+[0m[0m scsi_bus_sharing                        = "noSharing"\n      [32m+[0m[0m scsi_controller_count                   = 1\n      [32m+[0m[0m scsi_type                               = "pvscsi"\n      [32m+[0m[0m shutdown_wait_timeout                   = 3\n      [32m+[0m[0m storage_policy_id                       = (known after apply)\n      [32m+[0m[0m swap_placement_policy                   = "inherit"\n      [32m+[0m[0m sync_time_with_host                     = true\n      [32m+[0m[0m tools_upgrade_policy                    = "manual"\n      [32m+[0m[0m uuid                                    = (known after apply)\n      [32m+[0m[0m vapp_transport                          = (known after apply)\n      [32m+[0m[0m vmware_tools_status                     = (known after apply)\n      [32m+[0m[0m vmx_path                                = (known after apply)\n      [32m+[0m[0m wait_for_guest_ip_timeout               = 0\n      [32m+[0m[0m wait_for_guest_net_routable             = true\n      [32m+[0m[0m wait_for_guest_net_timeout              = 5\n\n      [32m+[0m[0m disk {\n          [32m+[0m[0m attach            = false\n          [32m+[0m[0m controller_type   = "scsi"\n          [32m+[0m[0m datastore_id      = "<computed>"\n          [32m+[0m[0m device_address    = (known after apply)\n          [32m+[0m[0m disk_mode         = "persistent"\n          [32m+[0m[0m disk_sharing      = "sharingNone"\n          [32m+[0m[0m eagerly_scrub     = false\n          [32m+[0m[0m io_limit          = -1\n          [32m+[0m[0m io_reservation    = 0\n          [32m+[0m[0m io_share_count    = 0\n          [32m+[0m[0m io_share_level    = "normal"\n          [32m+[0m[0m keep_on_remove    = false\n          [32m+[0m[0m key               = 0\n          [32m+[0m[0m label             = "disk0"\n          [32m+[0m[0m path              = (known after apply)\n          [32m+[0m[0m size              = 20\n          [32m+[0m[0m storage_policy_id = (known after apply)\n          [32m+[0m[0m thin_provisioned  = true\n          [32m+[0m[0m unit_number       = 0\n          [32m+[0m[0m uuid              = (known after apply)\n          [32m+[0m[0m write_through     = false\n        }\n\n      [32m+[0m[0m network_interface {\n          [32m+[0m[0m adapter_type          = "vmxnet3"\n          [32m+[0m[0m bandwidth_limit       = -1\n          [32m+[0m[0m bandwidth_reservation = 0\n          [32m+[0m[0m bandwidth_share_count = (known after apply)\n          [32m+[0m[0m bandwidth_share_level = "normal"\n          [32m+[0m[0m device_address        = (known after apply)\n          [32m+[0m[0m key                   = (known after apply)\n          [32m+[0m[0m mac_address           = (known after apply)\n          [32m+[0m[0m network_id            = "network-21"\n        }\n    }\n\n[1mPlan:[0m 1 to add, 0 to change, 0 to destroy.\n[0m\nChanges to Outputs:\n  [32m+[0m[0m vm_id          = (known after apply)\n  [33m~[0m[0m vm_name        = "Terraform" [33m->[0m[0m "Demo"\n  [32m+[0m[0m vm_power_state = (known after apply)\n[0m[1mvsphere_virtual_machine.vm: Creating...[0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [00m10s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [00m20s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [00m30s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [00m40s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [00m50s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [01m00s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [01m10s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [01m20s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [01m30s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [01m40s elapsed][0m[0m\nStopping operation...\n\nInterrupt received.\nPlease wait for Terraform to exit or data loss may occur.\nGracefully shutting down...\n\n\n--- TERRAFORM APPLY STDERR ---\n\nTwo interrupts received. Exiting immediately. Note that data loss may have\noccurred.\n\n[31mâ•·[0m[0m\n[31mâ”‚[0m [0m[1m[31mError: [0m[0m[1moperation canceled[0m\n[31mâ”‚[0m [0m\n[31mâ”‚[0m [0m[0m\n[31mâ•µ[0m[0m\n	resgroup-9	\N		vm01	192.168.1.26	255.255.255.0	192.168.1.1	example.tn	17	pvscsi			Ooredoo - Datacenter	\N	\N	0	\N	\N
+7	Demo	ubuntu64Guest	esxi-7.0	1	1	20.00	failed	2025-07-28 13:22:53.055883	host-12	vCLS-c4117699-d914-43a3-9540-03b5fe1ed36c	datastore-15	[{"size": 20, "provisioning": "thin"}]	[{"ip": "", "network_name": "IDS"}]	--- TFVARS CONTENT ---\n\n    vm_name = "Demo"\ndatacenter_name = "Ooredoo - Datacenter"\nos = "ubuntu64Guest"\nhardware_version = "17"\nscsi_controller_type = "pvscsi"\nnics = [{"ip": "", "network_name": "IDS"}]\ncpu = 1\nram = 1\nhost_system_id = "host-12"\nresource_pool_id = "resgroup-9"\ndatastore_id = "datastore-15"\nhostname = "pfSense"\nip = "192.168.1.25"\nnetmask = "255.255.255.0"\ngateway = "192.168.1.1"\ndomain = "example.tn"\n\n--- TERRAFORM INIT STDOUT ---\n[0m[1mInitializing the backend...[0m\n[0m[1mInitializing provider plugins...[0m\n- Reusing previous version of hashicorp/vsphere from the dependency lock file\n- Using previously-installed hashicorp/vsphere v2.12.0\n\n[33mâ•·[0m[0m\n[33mâ”‚[0m [0m[1m[33mWarning: [0m[0m[1mAdditional provider information from registry[0m\n[33mâ”‚[0m [0m\n[33mâ”‚[0m [0m[0mThe remote registry returned warnings for\n[33mâ”‚[0m [0mregistry.terraform.io/hashicorp/vsphere:\n[33mâ”‚[0m [0m- For users on Terraform 0.13 or greater, this provider has moved to\n[33mâ”‚[0m [0mvmware/vsphere. Please update your source in required_providers.\n[33mâ•µ[0m[0m\n[0m[1m[32mTerraform has been successfully initialized![0m[32m[0m\n[0m[32m\nYou may now begin working with Terraform. Try running "terraform plan" to see\nany changes that are required for your infrastructure. All Terraform commands\nshould now work.\n\nIf you ever set or change modules or backend configuration for Terraform,\nrerun this command to reinitialize your working directory. If you forget, other\ncommands will detect it and remind you to do so if necessary.[0m\n\n--- TERRAFORM INIT STDERR ---\n\n--- TERRAFORM APPLY STDOUT ---\n[0m[1mdata.vsphere_datacenter.dc: Reading...[0m[0m\n[0m[1mdata.vsphere_datacenter.dc: Read complete after 0s [id=datacenter-3][0m\n[0m[1mdata.vsphere_datastore.selected: Reading...[0m[0m\n[0m[1mdata.vsphere_network.network: Reading...[0m[0m\n[0m[1mdata.vsphere_datastore.selected: Read complete after 0s [id=datastore-15][0m\n[0m[1mdata.vsphere_network.network: Read complete after 0s [id=network-16][0m\n[0m[1mvsphere_virtual_machine.vm: Refreshing state... [id=4207e9e7-5613-32c0-5cdc-f3447ed960fa][0m\n\n[1m[36mNote:[0m[1m Objects have changed outside of Terraform\n[0m\nTerraform detected the following changes made outside of Terraform since the\nlast "terraform apply" which may have affected this plan:\n\n[1m  # vsphere_virtual_machine.vm[0m has been deleted\n[0m  [31m-[0m[0m resource "vsphere_virtual_machine" "vm" {\n      [31m-[0m[0m id                                      = "4207e9e7-5613-32c0-5cdc-f3447ed960fa" [90m-> null[0m[0m\n      [31m-[0m[0m name                                    = "Terraform" [90m-> null[0m[0m\n        [90m# (37 unchanged attributes hidden)[0m[0m\n\n        [90m# (2 unchanged blocks hidden)[0m[0m\n    }\n\n\nUnless you have made equivalent changes to your configuration, or ignored the\nrelevant attributes using ignore_changes, the following plan may include\nactions to undo or respond to these changes.\n[90m\nâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€[0m\n\nTerraform used the selected providers to generate the following execution\nplan. Resource actions are indicated with the following symbols:\n  [32m+[0m create[0m\n\nTerraform will perform the following actions:\n\n[1m  # vsphere_virtual_machine.vm[0m will be created\n[0m  [32m+[0m[0m resource "vsphere_virtual_machine" "vm" {\n      [32m+[0m[0m annotation                              = (known after apply)\n      [32m+[0m[0m boot_retry_delay                        = 10000\n      [32m+[0m[0m change_version                          = (known after apply)\n      [32m+[0m[0m cpu_limit                               = -1\n      [32m+[0m[0m cpu_share_count                         = (known after apply)\n      [32m+[0m[0m cpu_share_level                         = "normal"\n      [32m+[0m[0m datastore_id                            = "datastore-15"\n      [32m+[0m[0m default_ip_address                      = (known after apply)\n      [32m+[0m[0m ept_rvi_mode                            = (known after apply)\n      [32m+[0m[0m extra_config_reboot_required            = true\n      [32m+[0m[0m firmware                                = "bios"\n      [32m+[0m[0m force_power_off                         = true\n      [32m+[0m[0m guest_id                                = "ubuntu64Guest"\n      [32m+[0m[0m guest_ip_addresses                      = (known after apply)\n      [32m+[0m[0m hardware_version                        = 17\n      [32m+[0m[0m host_system_id                          = "host-12"\n      [32m+[0m[0m hv_mode                                 = (known after apply)\n      [32m+[0m[0m id                                      = (known after apply)\n      [32m+[0m[0m ide_controller_count                    = 2\n      [32m+[0m[0m imported                                = (known after apply)\n      [32m+[0m[0m latency_sensitivity                     = "normal"\n      [32m+[0m[0m memory                                  = 1024\n      [32m+[0m[0m memory_limit                            = -1\n      [32m+[0m[0m memory_share_count                      = (known after apply)\n      [32m+[0m[0m memory_share_level                      = "normal"\n      [32m+[0m[0m migrate_wait_timeout                    = 30\n      [32m+[0m[0m moid                                    = (known after apply)\n      [32m+[0m[0m name                                    = "Demo"\n      [32m+[0m[0m num_cores_per_socket                    = 1\n      [32m+[0m[0m num_cpus                                = 1\n      [32m+[0m[0m nvme_controller_count                   = 0\n      [32m+[0m[0m power_state                             = (known after apply)\n      [32m+[0m[0m poweron_timeout                         = 300\n      [32m+[0m[0m reboot_required                         = (known after apply)\n      [32m+[0m[0m resource_pool_id                        = "resgroup-9"\n      [32m+[0m[0m run_tools_scripts_after_power_on        = true\n      [32m+[0m[0m run_tools_scripts_after_resume          = true\n      [32m+[0m[0m run_tools_scripts_before_guest_shutdown = true\n      [32m+[0m[0m run_tools_scripts_before_guest_standby  = true\n      [32m+[0m[0m sata_controller_count                   = 0\n      [32m+[0m[0m scsi_bus_sharing                        = "noSharing"\n      [32m+[0m[0m scsi_controller_count                   = 1\n      [32m+[0m[0m scsi_type                               = "pvscsi"\n      [32m+[0m[0m shutdown_wait_timeout                   = 3\n      [32m+[0m[0m storage_policy_id                       = (known after apply)\n      [32m+[0m[0m swap_placement_policy                   = "inherit"\n      [32m+[0m[0m sync_time_with_host                     = true\n      [32m+[0m[0m tools_upgrade_policy                    = "manual"\n      [32m+[0m[0m uuid                                    = (known after apply)\n      [32m+[0m[0m vapp_transport                          = (known after apply)\n      [32m+[0m[0m vmware_tools_status                     = (known after apply)\n      [32m+[0m[0m vmx_path                                = (known after apply)\n      [32m+[0m[0m wait_for_guest_ip_timeout               = 0\n      [32m+[0m[0m wait_for_guest_net_routable             = true\n      [32m+[0m[0m wait_for_guest_net_timeout              = 5\n\n      [32m+[0m[0m disk {\n          [32m+[0m[0m attach            = false\n          [32m+[0m[0m controller_type   = "scsi"\n          [32m+[0m[0m datastore_id      = "<computed>"\n          [32m+[0m[0m device_address    = (known after apply)\n          [32m+[0m[0m disk_mode         = "persistent"\n          [32m+[0m[0m disk_sharing      = "sharingNone"\n          [32m+[0m[0m eagerly_scrub     = false\n          [32m+[0m[0m io_limit          = -1\n          [32m+[0m[0m io_reservation    = 0\n          [32m+[0m[0m io_share_count    = 0\n          [32m+[0m[0m io_share_level    = "normal"\n          [32m+[0m[0m keep_on_remove    = false\n          [32m+[0m[0m key               = 0\n          [32m+[0m[0m label             = "disk0"\n          [32m+[0m[0m path              = (known after apply)\n          [32m+[0m[0m size              = 20\n          [32m+[0m[0m storage_policy_id = (known after apply)\n          [32m+[0m[0m thin_provisioned  = true\n          [32m+[0m[0m unit_number       = 0\n          [32m+[0m[0m uuid              = (known after apply)\n          [32m+[0m[0m write_through     = false\n        }\n\n      [32m+[0m[0m network_interface {\n          [32m+[0m[0m adapter_type          = "vmxnet3"\n          [32m+[0m[0m bandwidth_limit       = -1\n          [32m+[0m[0m bandwidth_reservation = 0\n          [32m+[0m[0m bandwidth_share_count = (known after apply)\n          [32m+[0m[0m bandwidth_share_level = "normal"\n          [32m+[0m[0m device_address        = (known after apply)\n          [32m+[0m[0m key                   = (known after apply)\n          [32m+[0m[0m mac_address           = (known after apply)\n          [32m+[0m[0m network_id            = "network-16"\n        }\n    }\n\n[1mPlan:[0m 1 to add, 0 to change, 0 to destroy.\n[0m\nChanges to Outputs:\n  [32m+[0m[0m vm_id          = (known after apply)\n  [33m~[0m[0m vm_name        = "Terraform" [33m->[0m[0m "Demo"\n  [32m+[0m[0m vm_power_state = (known after apply)\n[0m[1mvsphere_virtual_machine.vm: Creating...[0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [00m10s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [00m20s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [00m30s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [00m40s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [00m50s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [01m00s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [01m10s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [01m20s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [01m30s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [01m40s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [01m50s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [02m00s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [02m10s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [02m20s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [02m30s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [02m40s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [02m50s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [03m00s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [03m10s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [03m20s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [03m30s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [03m40s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [03m50s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [04m00s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [04m10s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [04m20s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [04m30s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [04m40s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [04m50s elapsed][0m[0m\n[0m[1mvsphere_virtual_machine.vm: Still creating... [05m00s elapsed][0m[0m\n\n--- TERRAFORM APPLY STDERR ---\n[31mâ•·[0m[0m\n[31mâ”‚[0m [0m[1m[31mError: [0m[0m[1mtimeout waiting for an available IP address[0m\n[31mâ”‚[0m [0m\n[31mâ”‚[0m [0m[0m  with vsphere_virtual_machine.vm,\n[31mâ”‚[0m [0m  on main.tf line 39, in resource "vsphere_virtual_machine" "vm":\n[31mâ”‚[0m [0m  39: resource "vsphere_virtual_machine" "vm" [4m{[0m[0m\n[31mâ”‚[0m [0m\n[31mâ•µ[0m[0m\n	resgroup-9	\N		pfSense	192.168.1.25	255.255.255.0	192.168.1.1	example.tn	17	pvscsi			Ooredoo - Datacenter	\N	\N	0	\N	\N
+\.
+
+
+--
+-- Name: clusters_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.clusters_id_seq', 2, true);
+
+
+--
+-- Name: datastores_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.datastores_id_seq', 4, true);
+
+
+--
+-- Name: hosts_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.hosts_id_seq', 4, true);
+
+
+--
+-- Name: monitoring_data_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.monitoring_data_id_seq', 1, false);
+
+
+--
+-- Name: system_metrics_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.system_metrics_id_seq', 6, true);
+
+
+--
+-- Name: vms_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.vms_id_seq', 4, true);
+
+
+--
+-- Name: vni_workorders_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.vni_workorders_id_seq', 3, true);
+
+
+--
+-- Name: workorders_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.workorders_id_seq', 7, true);
+
+
+--
+-- Name: clusters clusters_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.clusters
+    ADD CONSTRAINT clusters_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: datastores datastores_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.datastores
+    ADD CONSTRAINT datastores_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: hosts hosts_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.hosts
+    ADD CONSTRAINT hosts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: monitoring_data monitoring_data_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.monitoring_data
+    ADD CONSTRAINT monitoring_data_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: system_metrics system_metrics_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.system_metrics
+    ADD CONSTRAINT system_metrics_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: vms vms_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.vms
+    ADD CONSTRAINT vms_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: vni_workorders vni_workorders_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.vni_workorders
+    ADD CONSTRAINT vni_workorders_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: workorders workorders_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.workorders
+    ADD CONSTRAINT workorders_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ix_monitoring_data_data_type; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_monitoring_data_data_type ON public.monitoring_data USING btree (data_type);
+
+
+--
+-- Name: ix_monitoring_data_entity_name; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_monitoring_data_entity_name ON public.monitoring_data USING btree (entity_name);
+
+
+--
+-- Name: ix_monitoring_data_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_monitoring_data_id ON public.monitoring_data USING btree (id);
+
+
+--
+-- Name: ix_system_metrics_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_system_metrics_id ON public.system_metrics USING btree (id);
+
+
+--
+-- Name: ix_system_metrics_metric_type; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_system_metrics_metric_type ON public.system_metrics USING btree (metric_type);
+
+
+--
+-- Name: datastores datastores_cluster_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.datastores
+    ADD CONSTRAINT datastores_cluster_id_fkey FOREIGN KEY (cluster_id) REFERENCES public.clusters(id) ON DELETE CASCADE;
+
+
+--
+-- Name: hosts hosts_cluster_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.hosts
+    ADD CONSTRAINT hosts_cluster_id_fkey FOREIGN KEY (cluster_id) REFERENCES public.clusters(id) ON DELETE CASCADE;
+
+
+--
+-- Name: vms vms_cluster_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.vms
+    ADD CONSTRAINT vms_cluster_id_fkey FOREIGN KEY (cluster_id) REFERENCES public.clusters(id) ON DELETE CASCADE;
+
+
+--
+-- PostgreSQL database dump complete
+--
+

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from utils.safe_math import safe_div
 from services.vsphere.cluster_info import get_clusters_info, get_cluster_by_name
 
 router = APIRouter(

@@ -11,6 +11,7 @@ import Typography from '@mui/material/Typography';
 
 import { Image } from 'src/components/image';
 import { Carousel, useCarousel, CarouselDotButtons } from 'src/components/carousel';
+import { paths } from 'src/routes/paths';
 
 // ----------------------------------------------------------------------
 
@@ -71,18 +72,16 @@ function CarouselItem({ item, ...other }: CarouselItemProps) {
         }}
       >
         <Typography variant="overline" sx={{ opacity: 0.48 }}>
-          New
+          Recent Work Order
         </Typography>
-
         <Link color="inherit" underline="none" variant="h5" noWrap sx={{ mt: 1, mb: 3 }}>
           {item.name}
         </Link>
-
-        <Button color="primary" variant="contained" sx={{ alignSelf: 'flex-start' }}>
-          Buy now
+        <Button color="primary" variant="contained" sx={{ alignSelf: 'flex-start' }} href={paths.dashboard.workorder.request}>
+          Create a WorkOrder
         </Button>
       </Box>
-
+      {item.coverUrl && item.coverUrl.trim() !== '' ? (
       <Image
         alt={item.name}
         src={item.coverUrl}
@@ -93,8 +92,11 @@ function CarouselItem({ item, ...other }: CarouselItemProps) {
             }),
           },
         }}
-        sx={{ width: 1, height: { xs: 288, xl: 320 } }}
+          sx={{ width: 1, height: { xs: 288, xl: 320 }, objectFit: 'cover' }}
       />
+      ) : (
+        <Box sx={{ width: 1, height: { xs: 288, xl: 320 }, bgcolor: 'common.black' }} />
+      )}
     </Box>
   );
 }

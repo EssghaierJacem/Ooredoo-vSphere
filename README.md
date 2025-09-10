@@ -1,5 +1,3 @@
-# vSphere Monitoring API
-
 A comprehensive FastAPI-based REST API for monitoring vSphere infrastructure including clusters, hosts, datastores, and virtual machines.
 
 ## Features

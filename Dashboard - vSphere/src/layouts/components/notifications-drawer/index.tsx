@@ -35,23 +35,32 @@ const TABS = [
 
 export type NotificationsDrawerProps = IconButtonProps & {
   data?: NotificationItemProps['notification'][];
+  onSeen?: (id: string) => void;
+  onClearAll?: () => void;
+  tabData?: {
+    [key: string]: NotificationItemProps['notification'][];
+    all: NotificationItemProps['notification'][];
+    unread: NotificationItemProps['notification'][];
+    archived: NotificationItemProps['notification'][];
+  };
 };
 
-export function NotificationsDrawer({ data = [], sx, ...other }: NotificationsDrawerProps) {
+export function NotificationsDrawer({ data = [], sx, onSeen, onClearAll, tabData, ...other }: NotificationsDrawerProps) {
   const { value: open, onFalse: onClose, onTrue: onOpen } = useBoolean();
 
-  const [currentTab, setCurrentTab] = useState('all');
+  const [currentTab, setCurrentTab] = useState<'all' | 'unread' | 'archived'>('all');
 
   const handleChangeTab = useCallback((event: React.SyntheticEvent, newValue: string) => {
-    setCurrentTab(newValue);
+    setCurrentTab(newValue as 'all' | 'unread' | 'archived');
   }, []);
 
-  const [notifications, setNotifications] = useState(data);
+  // Use tabData if provided, else fallback to data
+  const notifications: NotificationItemProps['notification'][] = tabData && tabData[currentTab] ? tabData[currentTab] : data;
 
-  const totalUnRead = notifications.filter((item) => item.isUnRead === true).length;
+  const totalUnRead = tabData ? tabData.unread.length : (data.filter((item) => item.isUnRead === true).length);
 
   const handleMarkAllAsRead = () => {
-    setNotifications(notifications.map((notification) => ({ ...notification, isUnRead: false })));
+    if (onClearAll) onClearAll();
   };
 
   const renderHead = () => (
@@ -70,9 +79,9 @@ export function NotificationsDrawer({ data = [], sx, ...other }: NotificationsDr
       </Typography>
 
       {!!totalUnRead && (
-        <Tooltip title="Mark all as read">
+        <Tooltip title="Mark all as seen">
           <IconButton color="primary" onClick={handleMarkAllAsRead}>
-            <Iconify icon="eva:done-all-fill" />
+            <Iconify icon="eva:checkmark-circle-2-outline" />
           </IconButton>
         </Tooltip>
       )}
@@ -89,35 +98,41 @@ export function NotificationsDrawer({ data = [], sx, ...other }: NotificationsDr
 
   const renderTabs = () => (
     <CustomTabs variant="fullWidth" value={currentTab} onChange={handleChangeTab}>
-      {TABS.map((tab) => (
-        <Tab
-          key={tab.value}
-          iconPosition="end"
-          value={tab.value}
-          label={tab.label}
-          icon={
-            <Label
-              variant={((tab.value === 'all' || tab.value === currentTab) && 'filled') || 'soft'}
-              color={
-                (tab.value === 'unread' && 'info') ||
-                (tab.value === 'archived' && 'success') ||
-                'default'
-              }
-            >
-              {tab.count}
-            </Label>
-          }
-        />
-      ))}
+      <Tab
+        key="all"
+        iconPosition="end"
+        value="all"
+        label="All"
+        icon={<Label variant={(currentTab === 'all' && 'filled') || 'soft'}>{tabData ? tabData.all.length : data.length}</Label>}
+      />
+      <Tab
+        key="unread"
+        iconPosition="end"
+        value="unread"
+        label="Unread"
+        icon={<Label variant={(currentTab === 'unread' && 'filled') || 'soft'} color="info">{tabData ? tabData.unread.length : 0}</Label>}
+      />
+      <Tab
+        key="archived"
+        iconPosition="end"
+        value="archived"
+        label="Archived"
+        icon={<Label variant={(currentTab === 'archived' && 'filled') || 'soft'} color="success">{tabData ? tabData.archived.length : 0}</Label>}
+      />
     </CustomTabs>
   );
 
   const renderList = () => (
     <Scrollbar>
       <Box component="ul">
-        {notifications?.map((notification) => (
-          <Box component="li" key={notification.id} sx={{ display: 'flex' }}>
+        {notifications?.map((notification: NotificationItemProps['notification']) => (
+          <Box component="li" key={notification.id} sx={{ display: 'flex', alignItems: 'center' }}>
             <NotificationItem notification={notification} />
+            {onSeen && (
+              <Button size="small" onClick={() => onSeen(notification.id)} sx={{ ml: 1 }}>
+                {notification.isUnRead ? 'Seen' : 'Unseen'}
+              </Button>
+            )}
           </Box>
         ))}
       </Box>
@@ -155,7 +170,7 @@ export function NotificationsDrawer({ data = [], sx, ...other }: NotificationsDr
         {renderList()}
 
         <Box sx={{ p: 1 }}>
-          <Button fullWidth size="large">
+          <Button fullWidth size="large" href="/dashboard/two" component="a">
             View all
           </Button>
         </Box>
