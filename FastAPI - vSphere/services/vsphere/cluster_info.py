@@ -38,11 +38,7 @@ def get_clusters_info():
                             hw = host.hardware
                             quick = host.summary.quickStats
 
-<<<<<<< HEAD
-                            cores = hw.cpuInfo.numCpuCores
-=======
                             cores = hw.cpuInfo.numCpuCores or 0
->>>>>>> b6a50732447f10e725b0a10a64b30401cba752d5
                             hz = safe_div(hw.cpuInfo.hz, 1_000_000)  # Hz to MHz
                             cpu_total_mhz += cores * hz
                             cpu_used_mhz += quick.overallCpuUsage or 0

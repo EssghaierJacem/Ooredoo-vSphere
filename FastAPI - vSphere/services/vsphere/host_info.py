@@ -29,11 +29,7 @@ def get_hosts_info():
                         used_mem_gb = safe_div(quick_stats.overallMemoryUsage, 1024)  # in MB → GB
                         free_mem_gb = total_mem_gb - used_mem_gb
 
-<<<<<<< HEAD
-                        cpu_cores = hw.cpuInfo.numCpuCores
-=======
                         cpu_cores = hw.cpuInfo.numCpuCores or 0
->>>>>>> b6a50732447f10e725b0a10a64b30401cba752d5
                         cpu_hz = safe_div(hw.cpuInfo.hz, 1_000_000)  # Hz → MHz
                         total_cpu_mhz = cpu_cores * cpu_hz
                         used_cpu_mhz = quick_stats.overallCpuUsage or 0

@@ -128,11 +128,7 @@ def get_vms_summary():
             "total_memory_gb": total_memory_gb,
             "total_cpu_usage_mhz": total_cpu_usage_mhz,
             "total_memory_usage_gb": total_memory_usage_gb,
-<<<<<<< HEAD
             "cpu_usage_percent": safe_div(total_cpu_usage_mhz, (total_cpu * 2000)) * 100,  # Assuming 2GHz per core
-=======
-            "cpu_usage_percent": safe_div(total_cpu_usage_mhz, (total_cpu * 2000)) * 100,
->>>>>>> b6a50732447f10e725b0a10a64b30401cba752d5
             "memory_usage_percent": safe_div(total_memory_usage_gb, total_memory_gb) * 100
         }
     except Exception as e:
