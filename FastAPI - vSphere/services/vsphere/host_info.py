@@ -1,5 +1,6 @@
 from pyVmomi import vim
 from .connection import get_vsphere_connection
+from utils.safe_math import safe_div
 
 def get_hosts_info():
     """
@@ -24,12 +25,12 @@ def get_hosts_info():
                         summary = h.summary
                         quick_stats = summary.quickStats
 
-                        total_mem_gb = hw.memorySize / (1024 ** 3)
-                        used_mem_gb = quick_stats.overallMemoryUsage / 1024  # in MB → GB
+                        total_mem_gb = safe_div(hw.memorySize, 1024 ** 3)
+                        used_mem_gb = safe_div(quick_stats.overallMemoryUsage, 1024)  # in MB → GB
                         free_mem_gb = total_mem_gb - used_mem_gb
 
-                        cpu_cores = hw.cpuInfo.numCpuCores
-                        cpu_hz = hw.cpuInfo.hz / 1_000_000  # Hz → MHz
+                        cpu_cores = hw.cpuInfo.numCpuCores or 0
+                        cpu_hz = safe_div(hw.cpuInfo.hz, 1_000_000)  # Hz → MHz
                         total_cpu_mhz = cpu_cores * cpu_hz
                         used_cpu_mhz = quick_stats.overallCpuUsage or 0
                         free_cpu_mhz = total_cpu_mhz - used_cpu_mhz

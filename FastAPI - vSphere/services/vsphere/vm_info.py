@@ -1,5 +1,6 @@
 from pyVmomi import vim
 from .connection import get_vsphere_connection
+from utils.safe_math import safe_div
 
 def get_vms_info():
     """
@@ -39,7 +40,7 @@ def get_vms_info():
                     cpu_usage_mhz = quick_stats.overallCpuUsage or 0
                 if hasattr(quick_stats, 'overallMemoryUsage'):
                     memory_usage_mb = quick_stats.overallMemoryUsage or 0
-                    memory_usage_gb = memory_usage_mb / 1024
+                    memory_usage_gb = safe_div(memory_usage_mb, 1024)
             
             # Get VM hardware info
             num_cpu = 0
@@ -47,16 +48,16 @@ def get_vms_info():
             if config and hasattr(config, 'hardware') and config.hardware:
                 num_cpu = config.hardware.numCPU if hasattr(config.hardware, 'numCPU') else 0
                 memory_mb = config.hardware.memoryMB if hasattr(config.hardware, 'memoryMB') else 0
-                memory_gb = memory_mb / 1024
+                memory_gb = safe_div(memory_mb, 1024)
             
             # Get storage info (allocated/used)
             storage_committed_gb = 0
             storage_uncommitted_gb = 0
             storage_unshared_gb = 0
             if hasattr(summary, 'storage') and summary.storage:
-                storage_committed_gb = (summary.storage.committed or 0) / (1024 ** 3)
-                storage_uncommitted_gb = (summary.storage.uncommitted or 0) / (1024 ** 3)
-                storage_unshared_gb = (summary.storage.unshared or 0) / (1024 ** 3)
+                storage_committed_gb = safe_div(summary.storage.committed or 0, 1024 ** 3)
+                storage_uncommitted_gb = safe_div(summary.storage.uncommitted or 0, 1024 ** 3)
+                storage_unshared_gb = safe_div(summary.storage.unshared or 0, 1024 ** 3)
 
             # Get datastore info
             datastores = []

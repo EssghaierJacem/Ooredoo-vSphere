@@ -1,5 +1,6 @@
 from pyVmomi import vim
 from .connection import get_vsphere_connection
+from utils.safe_math import safe_div
 
 def get_datastores_info():
     """
@@ -19,8 +20,8 @@ def get_datastores_info():
         for dc in content.rootFolder.childEntity:
             for ds in dc.datastore:
                 summary = ds.summary
-                capacity_gb = summary.capacity / (1024 ** 3)
-                free_gb = summary.freeSpace / (1024 ** 3)
+                capacity_gb = safe_div(summary.capacity, 1024 ** 3)
+                free_gb = safe_div(summary.freeSpace, 1024 ** 3)
                 used_gb = capacity_gb - free_gb
                 
                 datastores.append({
@@ -29,7 +30,7 @@ def get_datastores_info():
                     'capacity_gb': capacity_gb,
                     'free_space_gb': free_gb,
                     'used_space_gb': used_gb,
-                    'uncommitted_gb': (summary.uncommitted or 0) / (1024 ** 3),
+                    'uncommitted_gb': safe_div(summary.uncommitted or 0, 1024 ** 3),
                     'accessible': summary.accessible,
                     'type': summary.type,
                     'url': summary.url,
