@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from utils.safe_math import safe_div
 from services.vsphere.cluster_info import get_clusters_info, get_cluster_by_name
 
 router = APIRouter(
@@ -55,8 +56,8 @@ def get_clusters_summary():
             "total_vms": total_vms,
             "running_vms": running_vms,
             "stopped_vms": stopped_vms,
-            "cpu_usage_percent": (used_cpu_mhz / total_cpu_mhz * 100) if total_cpu_mhz > 0 else 0,
-            "memory_usage_percent": (used_memory_gb / total_memory_gb * 100) if total_memory_gb > 0 else 0,
+            "cpu_usage_percent": safe_div(used_cpu_mhz, total_cpu_mhz) * 100,
+            "memory_usage_percent": safe_div(used_memory_gb, total_memory_gb) * 100,
             "total_cpu_mhz": total_cpu_mhz,
             "used_cpu_mhz": used_cpu_mhz,
             "total_memory_gb": total_memory_gb,

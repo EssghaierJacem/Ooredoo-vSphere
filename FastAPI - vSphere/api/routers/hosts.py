@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from utils.safe_math import safe_div
 from services.vsphere.host_info import get_hosts_info, get_host_by_name, get_hosts_by_cluster
 
 router = APIRouter(
@@ -66,8 +67,8 @@ def get_hosts_summary():
             "disconnected_hosts": disconnected_hosts,
             "powered_on_hosts": powered_on_hosts,
             "powered_off_hosts": powered_off_hosts,
-            "cpu_usage_percent": (used_cpu_mhz / total_cpu_mhz * 100) if total_cpu_mhz > 0 else 0,
-            "memory_usage_percent": (used_memory_gb / total_memory_gb * 100) if total_memory_gb > 0 else 0,
+            "cpu_usage_percent": safe_div(used_cpu_mhz, total_cpu_mhz) * 100,
+            "memory_usage_percent": safe_div(used_memory_gb, total_memory_gb) * 100,
             "total_cpu_mhz": total_cpu_mhz,
             "used_cpu_mhz": used_cpu_mhz,
             "total_memory_gb": total_memory_gb,

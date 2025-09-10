@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from utils.safe_math import safe_div
 from services.vsphere.datastore_info import (
     get_datastores_info, 
     get_datastore_by_name, 
@@ -86,7 +87,7 @@ def get_datastores_summary():
             "total_capacity_gb": total_capacity_gb,
             "total_free_gb": total_free_gb,
             "total_used_gb": total_used_gb,
-            "usage_percent": (total_used_gb / total_capacity_gb * 100) if total_capacity_gb > 0 else 0,
+            "usage_percent": safe_div(total_used_gb, total_capacity_gb) * 100,
             "type_distribution": type_counts
         }
     except Exception as e:
