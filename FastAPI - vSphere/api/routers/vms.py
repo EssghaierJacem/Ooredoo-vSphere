@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from utils.safe_math import safe_div
 from services.vsphere.vm_info import (
     get_vms_info, 
     get_vm_by_name, 
@@ -127,8 +128,8 @@ def get_vms_summary():
             "total_memory_gb": total_memory_gb,
             "total_cpu_usage_mhz": total_cpu_usage_mhz,
             "total_memory_usage_gb": total_memory_usage_gb,
-            "cpu_usage_percent": (total_cpu_usage_mhz / (total_cpu * 2000) * 100) if total_cpu > 0 else 0,  # Assuming 2GHz per core
-            "memory_usage_percent": (total_memory_usage_gb / total_memory_gb * 100) if total_memory_gb > 0 else 0
+            "cpu_usage_percent": safe_div(total_cpu_usage_mhz, (total_cpu * 2000)) * 100,
+            "memory_usage_percent": safe_div(total_memory_usage_gb, total_memory_gb) * 100
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
