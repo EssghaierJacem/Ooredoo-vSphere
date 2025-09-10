@@ -1,0 +1,25 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: vsphere-postgres
+    environment:
+      - POSTGRES_DB=vsphere_monitoring
+      - POSTGRES_USER=vsphere
+      - POSTGRES_PASSWORD=vsphere_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - vsphere_db_net
+
+volumes:
+  pgdata:
+
+networks:
+  vsphere_db_net:
+    driver: bridge
+
+
