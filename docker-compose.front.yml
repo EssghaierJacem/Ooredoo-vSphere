@@ -1,0 +1,24 @@
+version: '3.9'
+
+services:
+  frontend:
+    build:
+      context: "./Dashboard - vSphere"
+      dockerfile: Dockerfile
+    image: vsphere-frontend:latest
+    container_name: vsphere-frontend
+    ports:
+      - "80:80"
+    environment:
+      - BACKEND_HOST=10.181.25.147
+      - BACKEND_PORT=8000
+      - REACT_APP_SERVER_URL=
+      - REACT_APP_API_BASE_URL=/api
+    networks:
+      - vsphere_front_net
+
+networks:
+  vsphere_front_net:
+    driver: bridge
+
+

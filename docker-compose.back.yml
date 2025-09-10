@@ -1,0 +1,21 @@
+version: '3.9'
+
+services:
+  backend:
+    build:
+      context: "./FastAPI - vSphere"
+      dockerfile: Dockerfile
+    image: vsphere-backend:latest
+    container_name: vsphere-backend
+    env_file:
+      - "./FastAPI - vSphere/.env"
+    ports:
+      - "8000:8000"
+    networks:
+      - vsphere_back_net
+
+networks:
+  vsphere_back_net:
+    driver: bridge
+
+
