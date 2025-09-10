@@ -93,9 +93,9 @@ def get_system_overview():
                 "templates": templates
             },
             "resource_usage": {
-                "cpu_usage_percent": (used_cpu_mhz / total_cpu_mhz * 100) if total_cpu_mhz > 0 else 0,
-                "memory_usage_percent": (used_memory_gb / total_memory_gb * 100) if total_memory_gb > 0 else 0,
-                "storage_usage_percent": (used_storage_gb / total_storage_gb * 100) if total_storage_gb > 0 else 0,
+                "cpu_usage_percent": safe_div(used_cpu_mhz, total_cpu_mhz) * 100,
+                "memory_usage_percent": safe_div(used_memory_gb, total_memory_gb) * 100,
+                "storage_usage_percent": safe_div(used_storage_gb, total_storage_gb) * 100,
                 "total_cpu_mhz": total_cpu_mhz,
                 "used_cpu_mhz": used_cpu_mhz,
                 "total_memory_gb": total_memory_gb,
