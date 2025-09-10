@@ -127,8 +127,8 @@ def get_vms_summary():
             "total_memory_gb": total_memory_gb,
             "total_cpu_usage_mhz": total_cpu_usage_mhz,
             "total_memory_usage_gb": total_memory_usage_gb,
-            "cpu_usage_percent": (total_cpu_usage_mhz / (total_cpu * 2000) * 100) if total_cpu > 0 else 0,  # Assuming 2GHz per core
-            "memory_usage_percent": (total_memory_usage_gb / total_memory_gb * 100) if total_memory_gb > 0 else 0
+            "cpu_usage_percent": safe_div(total_cpu_usage_mhz, (total_cpu * 2000)) * 100,  # Assuming 2GHz per core
+            "memory_usage_percent": safe_div(total_memory_usage_gb, total_memory_gb) * 100
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

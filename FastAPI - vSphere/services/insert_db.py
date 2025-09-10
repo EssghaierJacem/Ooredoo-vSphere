@@ -6,6 +6,7 @@ from services.vsphere.cluster_info import get_clusters_info
 from services.vsphere.host_info import get_hosts_info
 from services.vsphere.datastore_info import get_datastores_info
 from services.vsphere.vm_info import get_vms_info
+from utils.safe_math import safe_div
 
 def store_monitoring_data():
     """
@@ -111,7 +112,7 @@ def store_monitoring_data():
         # CPU usage metric
         cpu_metric = SystemMetrics(
             metric_type='cpu_usage',
-            value=(used_cpu_mhz / total_cpu_mhz * 100) if total_cpu_mhz > 0 else 0,
+            value=safe_div(used_cpu_mhz, total_cpu_mhz) * 100,
             unit='percent',
             description='Overall CPU usage across all hosts'
         )
@@ -120,7 +121,7 @@ def store_monitoring_data():
         # Memory usage metric
         memory_metric = SystemMetrics(
             metric_type='memory_usage',
-            value=(used_memory_gb / total_memory_gb * 100) if total_memory_gb > 0 else 0,
+            value=safe_div(used_memory_gb, total_memory_gb) * 100,
             unit='percent',
             description='Overall memory usage across all hosts'
         )
@@ -129,7 +130,7 @@ def store_monitoring_data():
         # Storage usage metric
         storage_metric = SystemMetrics(
             metric_type='storage_usage',
-            value=(used_storage_gb / total_storage_gb * 100) if total_storage_gb > 0 else 0,
+            value=safe_div(used_storage_gb, total_storage_gb) * 100,
             unit='percent',
             description='Overall storage usage across all datastores'
         )

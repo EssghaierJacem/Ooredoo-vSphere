@@ -38,12 +38,12 @@ def get_clusters_info():
                             quick = host.summary.quickStats
 
                             cores = hw.cpuInfo.numCpuCores
-                            hz = hw.cpuInfo.hz / 1_000_000  # Hz to MHz
+                            hz = safe_div(hw.cpuInfo.hz, 1_000_000)  # Hz to MHz
                             cpu_total_mhz += cores * hz
                             cpu_used_mhz += quick.overallCpuUsage or 0
 
-                            total_mem_gb = hw.memorySize / (1024 ** 3)
-                            used_mem_gb = quick.overallMemoryUsage / 1024  # MB to GB
+                            total_mem_gb = safe_div(hw.memorySize, 1024 ** 3)
+                            used_mem_gb = safe_div(quick.overallMemoryUsage, 1024)  # MB to GB
                             mem_total_gb += total_mem_gb
                             mem_used_gb += used_mem_gb
 
@@ -54,8 +54,8 @@ def get_clusters_info():
 
                         for ds in cluster.datastore:
                             ds_summary = ds.summary
-                            capacity_gb = ds_summary.capacity / (1024 ** 3)
-                            free_gb = ds_summary.freeSpace / (1024 ** 3)
+                            capacity_gb = safe_div(ds_summary.capacity, 1024 ** 3)
+                            free_gb = safe_div(ds_summary.freeSpace, 1024 ** 3)
 
                             total_ds_capacity += capacity_gb
                             total_ds_free += free_gb
