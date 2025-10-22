@@ -85,6 +85,27 @@ export function Stepper({ steps, activeStep }: StepperProps) {
 
 // ----------------------------------------------------------------------
 
+export function StepQuantity() {
+  return (
+    <>
+      <Typography variant="subtitle2" sx={{ mb: 2 }}>
+        How many VNIs would you like to create?
+      </Typography>
+      <Field.Text
+        name="quantity.quantity"
+        label="Number of VNIs"
+        type="number"
+        variant="filled"
+        slotProps={{ 
+          inputLabel: { shrink: true }
+        }}
+        inputProps={{ min: 1, max: 10 }}
+        helperText="You can create between 1 and 10 VNIs at once"
+      />
+    </>
+  );
+}
+
 export function StepOne() {
   const { setValue } = useFormContext();
   const [deadline, setDeadline] = useState<IDatePickerControl>(dayjs(new Date()));
@@ -96,6 +117,17 @@ export function StepOne() {
 
   return (
     <>
+      <Field.Text
+        name="general.vni_type"
+        label="VNI Type"
+        select
+        variant="filled"
+        slotProps={{ inputLabel: { shrink: true } }}
+      >
+        <MenuItem value="DMZ">DMZ</MenuItem>
+        <MenuItem value="NON_DMZ">Non DMZ</MenuItem>
+      </Field.Text>
+
       <Field.Text
         name="general.owner"
         label="Owner"
@@ -399,9 +431,21 @@ export function StepTwo() {
 }
 
 export function StepReview({ values }: { values: any }) {
+  const quantity = values.quantity?.quantity || 1;
+  
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Typography variant="h6" gutterBottom>Review your VNI Work Order</Typography>
+      
+      <Box>
+        <Typography variant="subtitle2">Quantity</Typography>
+        <Typography variant="body2"><b>Number of VNIs:</b> {quantity}</Typography>
+        {quantity > 1 && (
+          <Typography variant="body2" color="info.main">
+            VNIs will be named: {values.vni_config?.vni_name}-01, {values.vni_config?.vni_name}-02, etc.
+          </Typography>
+        )}
+      </Box>
       
       <Box>
         <Typography variant="subtitle2">General Information</Typography>

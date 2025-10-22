@@ -9,33 +9,54 @@ import Button from '@mui/material/Button';
 
 import { Form } from 'src/components/hook-form';
 
-import { Stepper, StepOne, StepTwo, StepReview, StepCompleted } from './form-steps';
+import { Stepper, StepOne, StepTwo, StepThree, StepFour, StepFive, StepReview, StepCompleted } from './form-steps';
 import { postWorkOrder } from 'src/lib/api';
 
 // ----------------------------------------------------------------------
 
 const STEPS = [
   'General Info',
+  'Network Configuration',
+  'Location',
   'Resources',
+  'Users',
   'Review',
 ];
 
 const GeneralSchema = zod.object({
   name: zod.string().min(1, { message: 'VM Name is required!' }),
   os: zod.string().min(1, { message: 'OS Type is required!' }),
-  hostVersion: zod.string().min(1, { message: 'Host Version is required!' }),
+});
+
+const NetworkConfigSchema = zod.object({
+  ip: zod.string().min(1, { message: 'IP is required!' }),
+  gateway: zod.string().min(1, { message: 'Gateway is required!' }),
+  netmask: zod.string().min(1, { message: 'NetMask is required!' }),
+  uls: zod.string().min(1, { message: 'ULS is required!' }),
+});
+
+const LocationSchema = zod.object({
+  site: zod.string().min(1, { message: 'Site is required!' }),
+  cluster: zod.string().min(1, { message: 'Cluster is required!' }),
+  datastore: zod.string().min(1, { message: 'DataStore is required!' }),
 });
 
 const ResourcesSchema = zod.object({
   cpu: zod.number({ coerce: true }).int().min(1, { message: 'CPU is required!' }),
   ram: zod.number({ coerce: true }).int().min(1, { message: 'RAM is required!' }),
   disk: zod.number({ coerce: true }).min(1, { message: 'Disk is required!' }),
-  // host_id and template_id removed from creation schema
+});
+
+const UsersSchema = zod.object({
+  users: zod.array(zod.string()).min(1, { message: 'At least one user is required!' }),
 });
 
 const WizardSchema = zod.object({
   general: GeneralSchema,
+  network_config: NetworkConfigSchema,
+  location: LocationSchema,
   resources: ResourcesSchema,
+  users: UsersSchema,
 });
 
 type WizardSchemaType = zod.infer<typeof WizardSchema>;
@@ -46,13 +67,25 @@ const defaultValues: WizardSchemaType = {
   general: {
     name: '',
     os: '',
-    hostVersion: '',
+  },
+  network_config: {
+    ip: '',
+    gateway: '',
+    netmask: '',
+    uls: '',
+  },
+  location: {
+    site: 'OT-CHARGUIA',
+    cluster: 'ITaaS Workload',
+    datastore: '',
   },
   resources: {
     cpu: 1,
     ram: 1,
     disk: 1,
-    // host_id and template_id removed from creation defaults
+  },
+  users: {
+    users: [],
   },
 };
 
@@ -75,7 +108,7 @@ export function FormWizard() {
   } = methods;
 
   const handleNext = useCallback(
-    async (step?: 'general' | 'resources') => {
+    async (step?: 'general' | 'network_config' | 'location' | 'resources' | 'users') => {
       if (step) {
         const isValid = await trigger(step);
         if (isValid) {
@@ -100,12 +133,18 @@ export function FormWizard() {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const payload = {
-        ...data,
+      const workOrderPayload = {
+        general: data.general,
+        network_config: data.network_config,
+        location: data.location,
+        resources: data.resources,
+        users: data.users,
         requested_at: new Date().toISOString(),
       };
-      console.log("Submitting work order:", payload); // Debug log
-      await postWorkOrder(payload);
+
+      console.log("Submitting work order:", workOrderPayload); // Debug log
+
+      await postWorkOrder(workOrderPayload);
       handleNext();
     } catch (error) {
       console.error('Failed to submit work order:', error);
@@ -149,7 +188,10 @@ export function FormWizard() {
         >
           {activeStep === 0 && <StepOne />}
           {activeStep === 1 && <StepTwo />}
-          {activeStep === 2 && <StepReview values={getValues()} />}
+          {activeStep === 2 && <StepThree />}
+          {activeStep === 3 && <StepFour />}
+          {activeStep === 4 && <StepFive />}
+          {activeStep === 5 && <StepReview values={getValues()} />}
           {completedStep && <StepCompleted onReset={handleReset} />}
         </Box>
 
@@ -166,10 +208,29 @@ export function FormWizard() {
             )}
 
             {activeStep === 1 && (
+              <Button type="button" variant="contained" onClick={() => handleNext('network_config')}>
+                Next
+              </Button>
+            )}
+
+            {activeStep === 2 && (
+              <Button type="button" variant="contained" onClick={() => handleNext('location')}>
+                Next
+              </Button>
+            )}
+
+            {activeStep === 3 && (
               <Button type="button" variant="contained" onClick={() => handleNext('resources')}>
                 Next
               </Button>
             )}
+
+            {activeStep === 4 && (
+              <Button type="button" variant="contained" onClick={() => handleNext('users')}>
+                Next
+              </Button>
+            )}
+
 
             {activeStep === STEPS.length - 1 && (
               <Button type="submit" variant="contained" disabled={isSubmitting}>

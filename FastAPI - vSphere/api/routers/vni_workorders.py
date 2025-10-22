@@ -45,12 +45,18 @@ def create_vni_workorder(
         else:
             deadline = datetime.utcnow()
         
+        # Normalize vni_type (DMZ or NON_DMZ)
+        raw_type = (vni_workorder.get("vni_type", "NON_DMZ") or "NON_DMZ").strip().upper()
+        norm_type = "DMZ" if raw_type == "DMZ" else "NON_DMZ"
+        print(f"Raw VNI Type: '{raw_type}', Normalized: '{norm_type}'")
+
         new_vni_order = VNIWorkOrder(
             owner=vni_workorder["owner"],
             requested_date=requested_date,
             requested_by=vni_workorder["requested_by"],
             virtual_machines=vni_workorder.get("virtual_machines", []),
             deadline=deadline,
+            vni_type=norm_type,
             project=vni_workorder["project"],
             t0_gw=vni_workorder["t0_gw"],
             t1_gw=vni_workorder["t1_gw"],
@@ -79,6 +85,7 @@ def create_vni_workorder(
             "requested_by": new_vni_order.requested_by,
             "virtual_machines": new_vni_order.virtual_machines,
             "deadline": new_vni_order.deadline.isoformat(),
+            "vni_type": new_vni_order.vni_type,
             "project": new_vni_order.project,
             "t0_gw": new_vni_order.t0_gw,
             "t1_gw": new_vni_order.t1_gw,
@@ -116,6 +123,14 @@ def get_vni_workorders(
         
         if status:
             query = query.filter(VNIWorkOrder.status == status)
+        
+        # Optional filter by vni_type
+        vni_type = None
+        try:
+            # If provided in querystring, FastAPI will capture it if declared; we read from request dict for simplicity
+            pass
+        except Exception:
+            vni_type = None
             
         vni_workorders = query.offset(skip).limit(limit).all()
         
@@ -127,6 +142,7 @@ def get_vni_workorders(
                 "requested_by": wo.requested_by,
                 "virtual_machines": wo.virtual_machines,
                 "deadline": wo.deadline.isoformat(),
+                "vni_type": wo.vni_type,
                 "project": wo.project,
                 "t0_gw": wo.t0_gw,
                 "t1_gw": wo.t1_gw,
@@ -169,6 +185,7 @@ def get_vni_workorder(
             "requested_by": vni_workorder.requested_by,
             "virtual_machines": vni_workorder.virtual_machines,
             "deadline": vni_workorder.deadline.isoformat(),
+            "vni_type": vni_workorder.vni_type,
             "project": vni_workorder.project,
             "t0_gw": vni_workorder.t0_gw,
             "t1_gw": vni_workorder.t1_gw,
@@ -214,6 +231,12 @@ def update_vni_workorder(
                         value = datetime.fromisoformat(value)
                     except Exception:
                         value = datetime.utcnow()
+                if field == "vni_type" and value:
+                    try:
+                        value = (value or "NON_DMZ").strip().upper()
+                        value = "DMZ" if value == "DMZ" else "NON_DMZ"
+                    except Exception:
+                        value = "NON_DMZ"
                 setattr(vni_workorder, field, value)
         
         vni_workorder.updated_at = datetime.utcnow()
@@ -227,6 +250,7 @@ def update_vni_workorder(
             "requested_by": vni_workorder.requested_by,
             "virtual_machines": vni_workorder.virtual_machines,
             "deadline": vni_workorder.deadline.isoformat(),
+            "vni_type": vni_workorder.vni_type,
             "project": vni_workorder.project,
             "t0_gw": vni_workorder.t0_gw,
             "t1_gw": vni_workorder.t1_gw,

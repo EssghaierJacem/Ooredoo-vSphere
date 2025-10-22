@@ -22,6 +22,7 @@ import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
 
 import { fDate, fTime } from 'src/utils/format-time';
+import { exportVNIWorkOrdersToExcel } from 'src/utils/simple-excel-export';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 
@@ -44,6 +45,7 @@ const DETAILED_TABLE_HEAD: TableHeadCellProps[] = [
   { id: 'owner', label: 'Owner', width: 140 },
   { id: 'description', label: 'Description', width: 250 },
   { id: 'vni_name', label: 'VNI Name', width: 140 },
+  { id: 'vni_type', label: 'Type', width: 100, align: 'center' },
   { id: 'cidr', label: 'CIDR', width: 120 },
   { id: 'subnet_mask', label: 'Subnet Mask', width: 140 },
   { id: 'gateway', label: 'Gateway', width: 140 },
@@ -137,6 +139,16 @@ function VNIWorkOrderDetailedView() {
     window.location.href = paths.dashboard.workorder_vni.edit(id);
   };
 
+  const handleExportToExcel = () => {
+    try {
+      exportVNIWorkOrdersToExcel(tableData, 'vni-workorders-detailed');
+      toast.success('Excel file exported successfully!');
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export Excel file');
+    }
+  };
+
   const paginatedData = tableData.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
@@ -152,14 +164,24 @@ function VNIWorkOrderDetailedView() {
           { name: 'Detailed View' },
         ]}
         action={
-          <Button
-            component={RouterLink}
-            href={paths.dashboard.workorder_vni.list}
-            variant="outlined"
-            startIcon={<Iconify icon="solar:list-bold" />}
-          >
-            Back to List
-          </Button>
+          <Stack direction="row" spacing={2}>
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<Iconify icon="solar:file-text-bold" />}
+              onClick={handleExportToExcel}
+            >
+              Export to Excel
+            </Button>
+            <Button
+              component={RouterLink}
+              href={paths.dashboard.workorder_vni.list}
+              variant="outlined"
+              startIcon={<Iconify icon="solar:list-bold" />}
+            >
+              Back to List
+            </Button>
+          </Stack>
         }
         sx={{
           mb: { xs: 3, md: 5 },
@@ -240,6 +262,12 @@ function VNIWorkOrderDetailedView() {
                         <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
                           {row.vni_name || 'N/A'}
                         </Typography>
+                      </TableCell>
+
+                      <TableCell align="center">
+                        <Label variant="soft" color={row.vni_type === 'DMZ' ? 'error' : 'success'}>
+                          {row.vni_type === 'NON_DMZ' ? 'Non DMZ' : 'DMZ'}
+                        </Label>
                       </TableCell>
 
                       <TableCell>

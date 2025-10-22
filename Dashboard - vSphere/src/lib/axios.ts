@@ -2,11 +2,8 @@ import type { AxiosRequestConfig } from 'axios';
 
 import axios from 'axios';
 
-import { CONFIG } from 'src/global-config';
-
-// ----------------------------------------------------------------------
-
-const axiosInstance = axios.create({ baseURL: CONFIG.serverUrl });
+// Use full paths per-request (e.g., '/api/...')
+const axiosInstance = axios.create({ baseURL: '' });
 
 axiosInstance.interceptors.response.use(
   (response) => response,

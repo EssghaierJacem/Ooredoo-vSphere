@@ -53,7 +53,6 @@ export const dashboardRoutes: RouteObject[] = [
     children: [
       { element: <IndexPage />, index: true },
       { path: 'workorders_vm', element: <PageTwo /> },
-      { path: 'vms', element: <PageThree /> },
       {
         path: 'deployments',
         children: [

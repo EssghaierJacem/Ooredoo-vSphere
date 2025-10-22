@@ -23,6 +23,10 @@ const STEPS = [
 const GeneralSchema = zod.object({
   owner: zod.string().min(1, { message: 'Owner is required!' }),
   requested_by: zod.string().min(1, { message: 'Requested By is required!' }),
+  vni_type: zod.string().min(1, { message: 'VNI Type is required!' }).refine(
+    (val) => val === 'DMZ' || val === 'NON_DMZ',
+    { message: 'Please select DMZ or NON_DMZ' }
+  ),
   project: zod.string().min(1, { message: 'Project is required!' }),
   description: zod.string().min(1, { message: 'Description is required!' }),
   priority: zod.string().min(1, { message: 'Priority is required!' }),
@@ -54,6 +58,7 @@ const defaultValues: WizardSchemaType = {
   general: {
     owner: '',
     requested_by: '',
+    vni_type: 'DMZ',
     project: '',
     description: '',
     priority: 'normal',
@@ -122,6 +127,7 @@ export function FormWizard() {
         requested_by: data.general.requested_by,
         virtual_machines: [],
         deadline: data.general.deadline || new Date().toISOString(),
+        vni_type: data.general.vni_type,
         project: data.general.project,
         t0_gw: data.vni_config.t0_gw,
         t1_gw: data.vni_config.t1_gw,
@@ -138,7 +144,6 @@ export function FormWizard() {
         assigned_to: null,
       };
 
-      console.log("Submitting VNI work order:", vniWorkOrderData);
       await postVNIWorkOrder(vniWorkOrderData);
       handleNext();
     } catch (error) {

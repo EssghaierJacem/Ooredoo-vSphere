@@ -233,9 +233,6 @@ export function DashboardLayout({
 
           {/** @slot Settings button */}
           <SettingsButton />
-
-          {/** @slot Account drawer */}
-          <AccountDrawer data={_account} />
         </Box>
       ),
     };

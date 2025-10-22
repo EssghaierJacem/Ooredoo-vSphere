@@ -8,6 +8,7 @@ export type IVNIWorkOrderTableFilters = {
   project: string[];
   endDate: IDatePickerControl;
   startDate: IDatePickerControl;
+  vni_type?: 'all' | 'DMZ' | 'NON_DMZ';
 };
 
 export type IVNIWorkOrder = {
@@ -17,6 +18,7 @@ export type IVNIWorkOrder = {
   requested_by: string;
   virtual_machines: any[];
   deadline: string;
+  vni_type: 'DMZ' | 'NON_DMZ';
   project: string;
   t0_gw: string;
   t1_gw: string;

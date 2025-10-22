@@ -17,8 +17,10 @@ import DialogActions from '@mui/material/DialogActions';
 import { Iconify } from 'src/components/iconify';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import Chip from '@mui/material/Chip';
 import { Label } from 'src/components/label';
 import { fToNow } from 'src/utils/format-time';
+import { exportWorkOrdersToExcel } from 'src/utils/simple-excel-export';
 
 export default function WorkOrderDetailPage() {
   const { id } = useParams();
@@ -66,44 +68,54 @@ export default function WorkOrderDetailPage() {
   if (error) return <Box sx={{ textAlign: 'center', mt: 8 }}>{error}</Box>;
   if (!workOrder) return <Box sx={{ textAlign: 'center', mt: 8 }}>Work order not found.</Box>;
 
-  // Host support logic (use memory_free_gb and cpu_free_mhz)
-  const supportingHosts = hosts.filter((host) =>
-    (typeof host.memory_free_gb === 'number' ? host.memory_free_gb : 0) >= workOrder.ram &&
-    (typeof host.cpu_free_mhz === 'number' ? host.cpu_free_mhz : 0) >= (workOrder.cpu * 1000)
-  );
-  // Datastore support logic
-  const supportingDatastores = datastores.filter((ds) =>
-    (ds.free_space_gb ?? ds.capacity_gb) >= workOrder.disk
-  );
-  // Status color logic (case-insensitive, matches table)
-  const statusColor =
-    workOrder.status?.toLowerCase() === 'approved'
-      ? 'success'
-      : workOrder.status?.toLowerCase() === 'rejected'
-      ? 'error'
-      : workOrder.status?.toLowerCase() === 'pending'
-      ? 'warning'
-      : 'default';
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'pending':
+        return 'warning';
+      case 'approved':
+        return 'success';
+      case 'rejected':
+        return 'error';
+      case 'draft':
+        return 'default';
+      case 'executing':
+        return 'info';
+      case 'completed':
+        return 'success';
+      case 'failed':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
+
+  const statusColor = getStatusColor(workOrder.status);
 
   const handleEdit = () => {
-    router.push(paths.dashboard.workorder.edit(workOrder.id));
+    if (id !== undefined) router.push(paths.dashboard.workorder.edit(id));
   };
+
   const handleDelete = () => {
     setOpenDelete(true);
   };
+
   const handleDeleteConfirm = async () => {
     setDeleting(true);
+    setSnackbar({ open: false, message: '' });
     try {
       await deleteWorkOrder(Number(workOrder.id));
-      setSnackbar({ open: true, message: 'Work order deleted!', color: 'success' });
-      setOpenDelete(false);
-      setTimeout(() => router.push(paths.dashboard.workorder.list), 1000);
-    } catch (e) {
-      setSnackbar({ open: true, message: 'Failed to delete work order', color: 'error' });
+      setSnackbar({ open: true, message: 'Work order deleted successfully!', color: 'success' });
+      setTimeout(() => {
+        router.push(paths.dashboard.workorder.list);
+      }, 1500);
+    } catch (e: any) {
+      setSnackbar({ open: true, message: e?.response?.data?.detail || 'Failed to delete work order', color: 'error' });
     } finally {
       setDeleting(false);
+      setOpenDelete(false);
     }
   };
+
   const handleDeleteCancel = () => {
     setOpenDelete(false);
   };
@@ -122,6 +134,16 @@ export default function WorkOrderDetailPage() {
     }
   };
 
+  const handleExportExcel = () => {
+    try {
+      exportWorkOrdersToExcel([workOrder], `vm-workorder-${workOrder.name}-${workOrder.id}`);
+      setSnackbar({ open: true, message: 'Excel file exported successfully!', color: 'success' });
+    } catch (error) {
+      console.error('Export failed:', error);
+      setSnackbar({ open: true, message: 'Failed to export Excel file', color: 'error' });
+    }
+  };
+
   return (
     <Box sx={{ maxWidth: 1000, mx: 'auto', mt: 6, mb: 6 }}>
       <Paper elevation={4} sx={{ borderRadius: 4, p: { xs: 2, md: 4 }, background: (theme) => theme.palette.background.default }}>
@@ -132,6 +154,11 @@ export default function WorkOrderDetailPage() {
             </Grid>
             <Grid size={{ xs: 12, md: 4 }} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
               <Box sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' }, gap: 1 }}>
+                <Tooltip title="Export to Excel">
+                  <IconButton color="success" onClick={handleExportExcel}>
+                    <Iconify icon="solar:file-text-bold" width={24} />
+                  </IconButton>
+                </Tooltip>
                 <Tooltip title="Edit">
                   <IconButton color="warning" onClick={handleEdit}>
                     <Iconify icon="solar:pen-bold" width={24} />
@@ -146,13 +173,19 @@ export default function WorkOrderDetailPage() {
             </Grid>
           </Grid>
         </Box>
+        
         <Grid container spacing={4} sx={{ mt: 2 }}>
+          {/* General Information */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <Paper elevation={0} sx={{ p: 2, mb: 2, background: (theme) => theme.palette.background.paper, borderRadius: 2 }}>
-              <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', mb: 1 }}>General Info</Typography>
-              <Box component="dl" sx={{ mb: 2, display: 'grid', gridTemplateColumns: 'max-content 1fr', rowGap: 1.5, columnGap: 2 }}>
-                <Typography component="dt" sx={{ fontWeight: 600 }}>Name:</Typography>
+            <Paper elevation={0} sx={{ p: 3, mb: 2, background: (theme) => theme.palette.background.paper, borderRadius: 2 }}>
+              <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                 General Information
+              </Typography>
+              <Box component="dl" sx={{ display: 'grid', gridTemplateColumns: 'max-content 1fr', rowGap: 1.5, columnGap: 2 }}>
+                <Typography component="dt" sx={{ fontWeight: 600 }}>VM Name:</Typography>
                 <Typography component="dd">{workOrder.name}</Typography>
+                <Typography component="dt" sx={{ fontWeight: 600 }}>OS Type:</Typography>
+                <Typography component="dd">{workOrder.os || 'N/A'}</Typography>
                 <Typography component="dt" sx={{ fontWeight: 600 }}>Status:</Typography>
                 <Box component="dd" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Label
@@ -166,173 +199,137 @@ export default function WorkOrderDetailPage() {
                 <Typography component="dt" sx={{ fontWeight: 600 }}>Created At:</Typography>
                 <Typography component="dd">{fToNow(workOrder.created_at)}</Typography>
               </Box>
-              <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', mt: 3, mb: 1 }}>Resources</Typography>
+            </Paper>
+          </Grid>
+
+          {/* Network Configuration */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper elevation={0} sx={{ p: 3, mb: 2, background: (theme) => theme.palette.background.paper, borderRadius: 2 }}>
+              <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                 Network Configuration
+              </Typography>
+              <Box component="dl" sx={{ display: 'grid', gridTemplateColumns: 'max-content 1fr', rowGap: 1.5, columnGap: 2 }}>
+                <Typography component="dt" sx={{ fontWeight: 600 }}>IP Address:</Typography>
+                <Typography component="dd" sx={{ fontFamily: 'monospace' }}>{workOrder.ip || 'N/A'}</Typography>
+                <Typography component="dt" sx={{ fontWeight: 600 }}>Gateway:</Typography>
+                <Typography component="dd" sx={{ fontFamily: 'monospace' }}>{workOrder.gateway || 'N/A'}</Typography>
+                <Typography component="dt" sx={{ fontWeight: 600 }}>NetMask:</Typography>
+                <Typography component="dd" sx={{ fontFamily: 'monospace' }}>{workOrder.netmask || 'N/A'}</Typography>
+                <Typography component="dt" sx={{ fontWeight: 600 }}>ULS:</Typography>
+                <Typography component="dd">{workOrder.uls || 'N/A'}</Typography>
+              </Box>
+            </Paper>
+          </Grid>
+
+          {/* Location */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper elevation={0} sx={{ p: 3, mb: 2, background: (theme) => theme.palette.background.paper, borderRadius: 2 }}>
+              <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                 Location
+              </Typography>
+              <Box component="dl" sx={{ display: 'grid', gridTemplateColumns: 'max-content 1fr', rowGap: 1.5, columnGap: 2 }}>
+                <Typography component="dt" sx={{ fontWeight: 600 }}>Site:</Typography>
+                <Typography component="dd">{workOrder.site || 'N/A'}</Typography>
+                <Typography component="dt" sx={{ fontWeight: 600 }}>Cluster:</Typography>
+                <Typography component="dd">{workOrder.cluster || 'N/A'}</Typography>
+                <Typography component="dt" sx={{ fontWeight: 600 }}>DataStore:</Typography>
+                <Typography component="dd">{workOrder.datastore_id || 'N/A'}</Typography>
+              </Box>
+            </Paper>
+          </Grid>
+
+          {/* Resources */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper elevation={0} sx={{ p: 3, mb: 2, background: (theme) => theme.palette.background.paper, borderRadius: 2 }}>
+              <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                 Resources
+              </Typography>
               <Box component="dl" sx={{ display: 'grid', gridTemplateColumns: 'max-content 1fr', rowGap: 1.5, columnGap: 2 }}>
                 <Typography component="dt" sx={{ fontWeight: 600 }}>CPU:</Typography>
-                <Typography component="dd">{workOrder.cpu}</Typography>
+                <Typography component="dd">{workOrder.cpu} vCPU</Typography>
                 <Typography component="dt" sx={{ fontWeight: 600 }}>RAM:</Typography>
                 <Typography component="dd">{workOrder.ram} GB</Typography>
-                <Typography component="dt" sx={{ fontWeight: 600 }}>Disk:</Typography>
+                <Typography component="dt" sx={{ fontWeight: 600 }}>DISK:</Typography>
                 <Typography component="dd">{workOrder.disk} GB</Typography>
               </Box>
-              {/* Show placement, host, VM, datastore, disks, nics if present */}
-              {(workOrder.host_id || workOrder.vm_id || workOrder.datastore_id || (workOrder.disks && workOrder.disks.length) || (workOrder.nics && workOrder.nics.length)) && (
-                <>
-                  <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', mt: 3, mb: 1 }}>Placement & Details</Typography>
-                  <Box component="dl" sx={{ display: 'grid', gridTemplateColumns: 'max-content 1fr', rowGap: 1.5, columnGap: 2 }}>
-                    {workOrder.host_id && <><Typography component="dt" sx={{ fontWeight: 600 }}>Host:</Typography><Typography component="dd">{workOrder.host_id}</Typography></>}
-                    {workOrder.vm_id && <><Typography component="dt" sx={{ fontWeight: 600 }}>VM Template:</Typography><Typography component="dd">{workOrder.vm_id}</Typography></>}
-                    {workOrder.datastore_id && <><Typography component="dt" sx={{ fontWeight: 600 }}>Datastore:</Typography><Typography component="dd">{workOrder.datastore_id}</Typography></>}
-                    {workOrder.disks && workOrder.disks.length > 0 && <>
-                      <Typography component="dt" sx={{ fontWeight: 600 }}>Disks:</Typography>
-                      <Box component="dd">
-                        {workOrder.disks.map((disk: any, idx: number) => (
-                          <Box key={idx} sx={{ mb: 0.5 }}>
-                            Label: <b>{disk.label || `disk${idx+1}`}</b>, Size: <b>{disk.size}</b> GB, Provisioning: <b>{disk.provisioning}</b>
-                          </Box>
-                        ))}
-                      </Box>
-                    </>}
-                    {workOrder.nics && workOrder.nics.length > 0 && (
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant="subtitle1" sx={{ color: 'secondary.main', mb: 1 }}>Network Interfaces</Typography>
-                        {workOrder.nics.map((nic: any, idx: number) => (
-                          <Box key={idx} sx={{ mb: 0.5, pl: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Typography variant="body2">Network: <b>{nic.network_name || nic.network_id}</b></Typography>
-                            {nic.ip_pool_id && <Typography variant="body2">IP Pool: <b>{nic.ip_pool_id}</b></Typography>}
-                            {nic.mask && <Typography variant="body2">Mask: <b>{nic.mask}</b></Typography>}
-                          </Box>
-                        ))}
-                      </Box>
-                    )}
-                    {workOrder.resource_pool_id && <><Typography component="dt" sx={{ fontWeight: 600, color: 'text.secondary' }}>Resource Pool:</Typography><Typography component="dd">{workOrder.resource_pool_id}</Typography></>}
-                  </Box>
-                </>
-              )}
-              {/* Show Execute button if approved */}
-              {workOrder.status?.toLowerCase() === 'approved' && (
-                <Box sx={{ mt: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Button variant="contained" color="success" startIcon={<Iconify icon="solar:play-circle-bold" width={24} />} onClick={handleExecute} disabled={executing}>
-                    {executing ? 'Executing...' : 'Execute'}
-                  </Button>
-                </Box>
-              )}
             </Paper>
           </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Paper elevation={0} sx={{ p: 2, mb: 2, background: (theme) => theme.palette.background.paper, borderRadius: 2 }}>
-              <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', mb: 1 }}>Placement</Typography>
-              <Box sx={{ mb: 2 }}>
-                <Typography><b>Host Version:</b> {workOrder.host_version}</Typography>
-                {workOrder.os && (
-                  <Typography><b>OS Version:</b> {workOrder.os}</Typography>
-                )}
-                {workOrder.os_version && !workOrder.os && (
-                  <Typography><b>OS Version:</b> {workOrder.os_version}</Typography>
-                )}
-              </Box>
-              <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', mt: 3, mb: 1 }}>Datastore</Typography>
-              <Box>
-                {datastores.length > 0 ? (
-                  datastores.map((ds) => {
-                    const canSupport = (ds.free_space_gb ?? ds.capacity_gb) >= workOrder.disk;
-                    const freeSpace = typeof ds.free_space_gb === 'number' ? ds.free_space_gb.toFixed(2) : undefined;
-                    return (
-                      <Box key={ds.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                        <Typography><b>{ds.name}</b>: {ds.capacity_gb} GB</Typography>
-                        {freeSpace && (
-                          <Typography sx={{ ml: 1, color: 'text.secondary', fontSize: 13 }}>
-                            (Free: {freeSpace} GB)
-                          </Typography>
-                        )}
-                        {canSupport && (
-                          <Label color="success" variant="soft" sx={{ ml: 1 }}>Supports</Label>
-                        )}
-                      </Box>
-                    );
-                  })
+
+          {/* Users */}
+          <Grid size={{ xs: 12 }}>
+            <Paper elevation={0} sx={{ p: 3, mb: 2, background: (theme) => theme.palette.background.paper, borderRadius: 2 }}>
+              <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                 Users
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {Array.isArray(workOrder.users) && workOrder.users.length > 0 ? (
+                  workOrder.users.map((user: string, index: number) => (
+                    <Chip key={index} label={user} variant="outlined" color="primary" />
+                  ))
                 ) : (
-                  <Typography>No datastores found.</Typography>
+                  <Typography color="text.secondary">No users assigned</Typography>
                 )}
               </Box>
             </Paper>
           </Grid>
-        </Grid>
-        <Box sx={{ mt: 4 }}>
-          <Typography variant="h6" gutterBottom>Host Support</Typography>
-          {supportingHosts.length > 0 ? (
-            <Alert severity="success" sx={{ mb: 2 }}>
-              {supportingHosts.length} host(s) can support this work order:
-              <Box component="ul" sx={{ pl: 3, mt: 1, mb: 0 }}>
-                {supportingHosts.map((h) => {
-                  const name = h.name || h.management_ip || h.ip || 'Unknown Host';
-                  const freeMem = typeof h.memory_free_gb === 'number' ? h.memory_free_gb : 0;
-                  const freeCpu = typeof h.cpu_free_mhz === 'number' ? h.cpu_free_mhz : 0;
-                  const freeStorage = typeof h.storage_free_gb === 'number' ? h.storage_free_gb : (typeof h.free_storage_gb === 'number' ? h.free_storage_gb : undefined);
-                  return (
-                    <li key={h.id || name}>
-                      <b>{name}</b>
-                      {h.management_ip && <span style={{ color: '#888', marginLeft: 6 }}>({h.management_ip})</span>}
-                      <span style={{ marginLeft: 10 }}>
-                        RAM: <b>{freeMem.toFixed(2)} GB</b>, CPU: <b>{freeCpu.toFixed(2)} MHz</b>
-                        {freeStorage !== undefined && (
-                          <>, Storage: <b>{freeStorage.toFixed(2)} GB</b></>
-                        )}
-                      </span>
-                    </li>
-                  );
-                })}
-              </Box>
-            </Alert>
-          ) : (
-            <Alert severity="warning" sx={{ mb: 2 }}>
-              No host found that can support the requested resources.<br />
-              {hosts.length > 0 && (
-                <Box sx={{ mt: 1 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>Closest hosts by available resources:</Typography>
-                  {hosts
-                    .map((host, idx) => {
-                      const freeMem = typeof host.memory_free_gb === 'number' ? host.memory_free_gb : 0;
-                      const freeCpu = typeof host.cpu_free_mhz === 'number' ? host.cpu_free_mhz : 0;
-                      return {
-                        ...host,
-                        name: host.name || host.management_ip || host.ip || 'Unknown Host',
-                        freeMem,
-                        freeCpu,
-                        memDiff: freeMem - workOrder.ram,
-                        cpuDiff: freeCpu - (workOrder.cpu * 1000),
-                      };
-                    })
-                    .sort((a, b) => (a.memDiff + a.cpuDiff) - (b.memDiff + b.cpuDiff))
-                    .slice(0, 2)
-                    .map((host, idx) => (
-                      <Box key={host.id || host.name || idx} sx={{ ml: 1, mb: 0.5 }}>
-                        <Typography variant="body2">
-                          <b>{host.name}</b> (Free RAM: {host.freeMem.toFixed(2)} GB, Free CPU: {host.freeCpu.toFixed(2)} MHz)
-                        </Typography>
-                      </Box>
-                    ))}
+
+          {/* Execute Button */}
+          {workOrder.status?.toLowerCase() === 'approved' && (
+            <Grid size={{ xs: 12 }}>
+              <Paper elevation={0} sx={{ p: 3, mb: 2, background: (theme) => theme.palette.background.paper, borderRadius: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Button 
+                    variant="contained" 
+                    color="success" 
+                    startIcon={<Iconify icon="solar:play-circle-bold" width={24} />} 
+                    onClick={handleExecute} 
+                    disabled={executing}
+                    size="large"
+                  >
+                    {executing ? 'Executing...' : 'Execute Work Order'}
+                  </Button>
+                  <Typography variant="body2" color="text.secondary">
+                    This will provision the VM according to the specifications above.
+                  </Typography>
                 </Box>
-              )}
-            </Alert>
+              </Paper>
+            </Grid>
           )}
-        </Box>
+        </Grid>
+
+        {/* Delete Confirmation Dialog */}
         <Dialog open={openDelete} onClose={handleDeleteCancel}>
-          <DialogTitle>Confirm Delete</DialogTitle>
-          <DialogContent>Are you sure you want to delete this work order?</DialogContent>
+          <DialogTitle>Delete Work Order</DialogTitle>
+          <DialogContent>
+            <Typography>
+              Are you sure you want to delete this work order? This action cannot be undone.
+            </Typography>
+          </DialogContent>
           <DialogActions>
-            <Button onClick={handleDeleteCancel} color="inherit" disabled={deleting}>Cancel</Button>
-            <Button onClick={handleDeleteConfirm} color="error" variant="contained" disabled={deleting}>{deleting ? 'Deleting...' : 'Delete'}</Button>
+            <Button onClick={handleDeleteCancel} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button onClick={handleDeleteConfirm} color="error" disabled={deleting}>
+              {deleting ? 'Deleting...' : 'Delete'}
+            </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Success/Error Snackbar */}
         <Snackbar
           open={snackbar.open}
-          autoHideDuration={3000}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          message={snackbar.message}
-          ContentProps={{ sx: { bgcolor: snackbar.color === 'error' ? 'error.main' : 'success.main', color: 'common.white' } }}
-        />
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ open: false, message: '' })}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert 
+            onClose={() => setSnackbar({ open: false, message: '' })} 
+            severity={snackbar.color || 'info'}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Paper>
     </Box>
   );
-} 
+}

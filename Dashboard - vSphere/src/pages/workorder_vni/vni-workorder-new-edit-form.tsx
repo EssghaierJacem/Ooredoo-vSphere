@@ -28,6 +28,9 @@ import { updateVNIWorkOrder } from 'src/lib/api';
 const VNIWorkOrderSchema = z.object({
   owner: z.string().min(1, 'Owner is required'),
   requested_by: z.string().min(1, 'Requested by is required'),
+  vni_type: z.enum(['DMZ', 'NON_DMZ'], {
+    required_error: 'VNI Type is required',
+  }),
   project: z.string().min(1, 'Project is required'),
   deadline: z.string().min(1, 'Deadline is required'),
   priority: z.string().min(1, 'Priority is required'),
@@ -62,6 +65,7 @@ export function VNIWorkOrderNewEditForm({ currentVNIWorkOrder }: Props) {
     defaultValues: {
       owner: currentVNIWorkOrder?.owner || '',
       requested_by: currentVNIWorkOrder?.requested_by || '',
+      vni_type: currentVNIWorkOrder?.vni_type || 'NON_DMZ',
       project: currentVNIWorkOrder?.project || '',
       deadline: currentVNIWorkOrder?.deadline || '',
       priority: currentVNIWorkOrder?.priority || 'medium',
@@ -108,6 +112,32 @@ export function VNIWorkOrderNewEditForm({ currentVNIWorkOrder }: Props) {
           </Typography>
 
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+            <Controller
+              name="vni_type"
+              control={control}
+              render={({ field }) => (
+                <FormControl fullWidth error={!!errors.vni_type}>
+                  <InputLabel>VNI Type</InputLabel>
+                  <Select {...field} label="VNI Type">
+                    <MenuItem value="DMZ">DMZ</MenuItem>
+                    <MenuItem value="NON_DMZ">Non DMZ</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
+            />
+            <Controller
+              name="vni_type"
+              control={control}
+              render={({ field }) => (
+                <FormControl fullWidth error={!!errors.vni_type}>
+                  <InputLabel>VNI Type</InputLabel>
+                  <Select {...field} label="VNI Type">
+                    <MenuItem value="DMZ">DMZ</MenuItem>
+                    <MenuItem value="NON_DMZ">Non DMZ</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
+            />
             <Controller
               name="owner"
               control={control}

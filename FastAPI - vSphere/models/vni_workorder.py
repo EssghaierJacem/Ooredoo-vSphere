@@ -17,6 +17,7 @@ class VNIWorkOrder(Base):
     deadline = Column(DateTime, nullable=False)
     
     # VNI Configuration fields
+    vni_type = Column(String, nullable=False, default="NON_DMZ")  # DMZ or NON_DMZ
     project = Column(String, nullable=False)
     t0_gw = Column(String, nullable=False)
     t1_gw = Column(String, nullable=False)

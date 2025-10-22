@@ -116,6 +116,15 @@ export function VNIWorkOrderDetails({ vniWorkOrder }: Props) {
 
           <Box>
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>
+              Type
+            </Typography>
+            <Label variant="soft" color={(vniWorkOrder?.vni_type || 'NON_DMZ') === 'DMZ' ? 'error' : 'success'}>
+              {(vniWorkOrder?.vni_type || 'NON_DMZ') === 'NON_DMZ' ? 'Non DMZ' : 'DMZ'}
+            </Label>
+          </Box>
+
+          <Box>
+            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>
               Priority
             </Typography>
             <Label variant="soft" color={getPriorityColor(vniWorkOrder?.priority || '')}>

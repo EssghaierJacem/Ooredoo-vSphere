@@ -6,7 +6,16 @@ from app.config import settings
 from models.workorder import WorkOrder
 
 # Create database engine
-engine = create_engine(settings.get_database_url())
+engine = create_engine(
+    settings.get_database_url(),
+    pool_timeout=30,
+    pool_recycle=3600,
+    pool_pre_ping=True,
+    connect_args={
+        "connect_timeout": 10,
+        "application_name": "vsphere_monitoring_api"
+    }
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Create base class for models

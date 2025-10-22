@@ -169,6 +169,12 @@ export function VNIWorkOrderTableRow({
         <TableCell>{fDate(row.deadline)}</TableCell>
 
         <TableCell>
+          <Label variant="soft" color={row.vni_type === 'DMZ' ? 'error' : 'success'}>
+            {row.vni_type === 'NON_DMZ' ? 'Non DMZ' : 'DMZ'}
+          </Label>
+        </TableCell>
+
+        <TableCell>
           <Label variant="soft" color={getPriorityColor(row.priority)}>
             {row.priority}
           </Label>

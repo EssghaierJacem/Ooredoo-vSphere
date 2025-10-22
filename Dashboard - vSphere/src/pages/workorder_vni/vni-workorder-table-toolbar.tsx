@@ -59,6 +59,15 @@ export function VNIWorkOrderTableToolbar({ filters, options, dateError, onResetP
     [onResetPage, updateFilters]
   );
 
+  const handleFilterVniType = useCallback(
+    (event: SelectChangeEvent<string>) => {
+      const newValue = event.target.value as 'all' | 'DMZ' | 'NON_DMZ';
+      onResetPage();
+      updateFilters({ vni_type: newValue });
+    },
+    [onResetPage, updateFilters]
+  );
+
   const handleFilterStartDate = useCallback(
     (newValue: IDatePickerControl) => {
       onResetPage();
@@ -122,6 +131,21 @@ export function VNIWorkOrderTableToolbar({ filters, options, dateError, onResetP
           alignItems: { xs: 'flex-end', md: 'center' },
         }}
       >
+        <FormControl sx={{ flexShrink: 0, width: { xs: 1, md: 180 } }}>
+          <InputLabel htmlFor="filter-type-select">Type</InputLabel>
+          <Select
+            native={false}
+            value={currentFilters.vni_type || 'all'}
+            onChange={handleFilterVniType}
+            input={<OutlinedInput label="Type" />}
+            inputProps={{ id: 'filter-type-select' }}
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="DMZ">DMZ</MenuItem>
+            <MenuItem value="NON_DMZ">Non DMZ</MenuItem>
+          </Select>
+        </FormControl>
+
         <FormControl sx={{ flexShrink: 0, width: { xs: 1, md: 180 } }}>
           <InputLabel htmlFor="filter-project-select">Project</InputLabel>
           <Select

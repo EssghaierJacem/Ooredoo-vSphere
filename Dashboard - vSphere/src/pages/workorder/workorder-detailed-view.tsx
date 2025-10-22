@@ -21,6 +21,7 @@ import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
 
 import { fDate, fTime } from 'src/utils/format-time';
+import { exportWorkOrdersToExcel } from 'src/utils/simple-excel-export';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 
@@ -77,14 +78,44 @@ const getTableHeaders = (data: any[]): TableHeadCellProps[] => {
     headers.push({ id: 'disk', label: 'Disk (GB)', width: 100, align: 'center' });
   }
 
+  // Check if any row has network configuration data
+  if (data.some(row => row.ip)) {
+    headers.push({ id: 'ip', label: 'IP', width: 120 });
+  }
+
+  if (data.some(row => row.gateway)) {
+    headers.push({ id: 'gateway', label: 'Gateway', width: 120 });
+  }
+
+  if (data.some(row => row.netmask)) {
+    headers.push({ id: 'netmask', label: 'NetMask', width: 120 });
+  }
+
+  if (data.some(row => row.uls)) {
+    headers.push({ id: 'uls', label: 'ULS', width: 100 });
+  }
+
+  // Check if any row has location data
+  if (data.some(row => row.site)) {
+    headers.push({ id: 'site', label: 'Site', width: 120 });
+  }
+
+  if (data.some(row => row.cluster)) {
+    headers.push({ id: 'cluster', label: 'Cluster', width: 150 });
+  }
+
+  if (data.some(row => row.datastore_id)) {
+    headers.push({ id: 'datastore_id', label: 'DataStore', width: 140 });
+  }
+
+  // Check if any row has users data
+  if (data.some(row => row.users && Array.isArray(row.users) && row.users.length > 0)) {
+    headers.push({ id: 'users', label: 'Users', width: 200 });
+  }
+
   // Check if any row has host_id data
   if (data.some(row => row.host_id)) {
     headers.push({ id: 'host_id', label: 'Host', width: 140 });
-  }
-
-  // Check if any row has datastore_id data
-  if (data.some(row => row.datastore_id)) {
-    headers.push({ id: 'datastore_id', label: 'Datastore', width: 140 });
   }
 
   // Always include status and priority if they exist
@@ -195,6 +226,16 @@ function WorkOrderDetailedView() {
     window.location.href = paths.dashboard.workorder.edit(id);
   };
 
+  const handleExportToExcel = () => {
+    try {
+      exportWorkOrdersToExcel(tableData, 'vm-workorders-detailed');
+      toast.success('Excel file exported successfully!');
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export Excel file');
+    }
+  };
+
   const paginatedData = tableData.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
@@ -210,14 +251,24 @@ function WorkOrderDetailedView() {
           { name: 'Detailed View' },
         ]}
         action={
-          <Button
-            component={RouterLink}
-            href={paths.dashboard.workorder.list}
-            variant="outlined"
-            startIcon={<Iconify icon="solar:list-bold" />}
-          >
-            Back to List
-          </Button>
+          <Stack direction="row" spacing={2}>
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<Iconify icon="solar:file-text-bold" />}
+              onClick={handleExportToExcel}
+            >
+              Export to Excel
+            </Button>
+            <Button
+              component={RouterLink}
+              href={paths.dashboard.workorder.list}
+              variant="outlined"
+              startIcon={<Iconify icon="solar:list-bold" />}
+            >
+              Back to List
+            </Button>
+          </Stack>
         }
         sx={{
           mb: { xs: 3, md: 5 },
@@ -323,6 +374,72 @@ function WorkOrderDetailedView() {
                                 <TableCell key={header.id} align="center">
                                   <Typography variant="body2" sx={{ fontWeight: 500 }}>
                                     {row.disk || 'N/A'}
+                                  </Typography>
+                                </TableCell>
+                              );
+                            case 'ip':
+                              return (
+                                <TableCell key={header.id}>
+                                  <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                                    {row.ip || 'N/A'}
+                                  </Typography>
+                                </TableCell>
+                              );
+                            case 'gateway':
+                              return (
+                                <TableCell key={header.id}>
+                                  <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                                    {row.gateway || 'N/A'}
+                                  </Typography>
+                                </TableCell>
+                              );
+                            case 'netmask':
+                              return (
+                                <TableCell key={header.id}>
+                                  <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                                    {row.netmask || 'N/A'}
+                                  </Typography>
+                                </TableCell>
+                              );
+                            case 'uls':
+                              return (
+                                <TableCell key={header.id}>
+                                  <Typography variant="body2">
+                                    {row.uls || 'N/A'}
+                                  </Typography>
+                                </TableCell>
+                              );
+                            case 'site':
+                              return (
+                                <TableCell key={header.id}>
+                                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                    {row.site || 'N/A'}
+                                  </Typography>
+                                </TableCell>
+                              );
+                            case 'cluster':
+                              return (
+                                <TableCell key={header.id}>
+                                  <Typography variant="body2">
+                                    {row.cluster || 'N/A'}
+                                  </Typography>
+                                </TableCell>
+                              );
+                            case 'datastore_id':
+                              return (
+                                <TableCell key={header.id}>
+                                  <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                                    {row.datastore_id || 'N/A'}
+                                  </Typography>
+                                </TableCell>
+                              );
+                            case 'users':
+                              return (
+                                <TableCell key={header.id}>
+                                  <Typography variant="body2">
+                                    {Array.isArray(row.users) && row.users.length > 0 
+                                      ? row.users.join(', ') 
+                                      : 'N/A'}
                                   </Typography>
                                 </TableCell>
                               );

@@ -8,6 +8,7 @@ export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 60000,
 });
 
 export const fetchDashboardOverview = (): Promise<any> =>
@@ -68,7 +69,7 @@ export const fetchResourcePools = (): Promise<any[]> =>
   api.get('/workorders/resource-pools/').then((res: { data: any[] }) => res.data);
 
 export const fetchIPPools = (): Promise<any[]> =>
-  api.get('/workorders/ip-pools/').then((res: { data: any[] }) => res.data); 
+  api.get('/workorders/ip-pools/').then((res: { data: any[] }) => res.data);
 
 export const fetchTemplates = (): Promise<any[]> =>
   api.get('/vms/templates/all').then((res: { data: any[] }) => res.data);
@@ -118,5 +119,10 @@ export const fetchVNIWorkOrderById = (id: number | string): Promise<any> =>
 
 export const exportVNIWorkOrderExcel = (id: number): Promise<Blob> =>
   api.get(`/vni-workorders/${id}/export-excel/`, {
+    responseType: 'blob',
+  }).then((res) => res.data);
+
+export const exportVMWorkOrderExcel = (id: number): Promise<Blob> =>
+  api.get(`/workorders/${id}/export-excel/`, {
     responseType: 'blob',
   }).then((res) => res.data); 

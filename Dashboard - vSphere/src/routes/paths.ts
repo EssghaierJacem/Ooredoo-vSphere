@@ -44,7 +44,6 @@ export const paths = {
   dashboard: {
     root: ROOTS.DASHBOARD,
     two: `${ROOTS.DASHBOARD}/workorders_vm`,
-    three: `${ROOTS.DASHBOARD}/vms`,
     group: {
       root: `${ROOTS.DASHBOARD}/deployments`,
       five: `${ROOTS.DASHBOARD}/deployments/ansible`,

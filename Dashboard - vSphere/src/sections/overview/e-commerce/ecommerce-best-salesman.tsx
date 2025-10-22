@@ -38,7 +38,8 @@ type Props = CardProps & {
     id: string;
     name: string;
     os: string;
-    hostVersion: string;
+    site: string;
+    cluster: string;
     cpu: number;
     ram: number;
     disk: number;
@@ -160,7 +161,8 @@ function RowItem({ row }: RowItemProps) {
     <TableRow>
       <TableCell>{row.name}</TableCell>
       <TableCell>{row.os}</TableCell>
-      <TableCell>{row.hostVersion}</TableCell>
+      <TableCell>{row.site}</TableCell>
+      <TableCell>{row.cluster}</TableCell>
       <TableCell>{row.cpu}</TableCell>
       <TableCell>{row.ram}</TableCell>
       <TableCell>{row.disk}</TableCell>

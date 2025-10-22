@@ -56,6 +56,7 @@ const TABLE_HEAD: TableHeadCellProps[] = [
   { id: 'owner', label: 'Owner' },
   { id: 'requested_date', label: 'Requested' },
   { id: 'deadline', label: 'Deadline' },
+  { id: 'vni_type', label: 'Type' },
   { id: 'priority', label: 'Priority' },
   { id: 'status', label: 'Status', align: 'center' },
   { id: 'actions', label: '' },
@@ -79,6 +80,7 @@ function VNIWorkOrderListView() {
     status: 'all',
     startDate: null,
     endDate: null,
+    vni_type: 'all',
   });
   const { state: currentFilters, setState: updateFilters } = filters;
 
@@ -115,6 +117,7 @@ function VNIWorkOrderListView() {
     !!currentFilters.owner ||
     currentFilters.project.length > 0 ||
     currentFilters.status !== 'all' ||
+    currentFilters.vni_type !== 'all' ||
     (!!currentFilters.startDate && !!currentFilters.endDate);
 
   const denseHeight = table.dense ? 52 : 72;
@@ -482,7 +485,7 @@ type ApplyFilterProps = {
 };
 
 function applyFilter({ inputData, comparator, filters, dateError }: ApplyFilterProps) {
-  const { owner, status, project, startDate, endDate } = filters;
+  const { owner, status, project, startDate, endDate, vni_type } = filters;
 
   const stabilizedThis = inputData.map((el, index) => [el, index] as const);
 
@@ -506,6 +509,10 @@ function applyFilter({ inputData, comparator, filters, dateError }: ApplyFilterP
 
   if (project.length) {
     inputData = inputData.filter((workorder) => project.includes(workorder.project));
+  }
+
+  if (vni_type && vni_type !== 'all') {
+    inputData = inputData.filter((workorder) => workorder.vni_type === vni_type);
   }
 
   if (!dateError) {
